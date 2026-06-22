@@ -8,7 +8,7 @@
 | Path | Owns |
 |------|------|
 | `src/app/api/rpc/[[...rest]]/route.ts` | The oRPC + OpenAPI catch-all handler. Builds the request context (`createContext(req, { db })`) — **where the real Postgres `db` is injected**. |
-| `src/app/layout.tsx`, `page.tsx` | Root layout + home (home becomes the ChadWallet landing). |
+| `src/app/layout.tsx` | Root layout — fonts + `Providers` only, no global chrome. The home route `/` is the landing at `(marketing)/page.tsx`; each route group owns its own chrome. |
 | `src/components/*` | App-local composite components (providers, header, mode-toggle, **auth-button**) + the product UI (banners, trading panels). `providers.tsx` mounts the **`PrivyProvider`** (`NEXT_PUBLIC_PRIVY_APP_ID`, email + Apple/Google + embedded Solana wallet); `auth-button.tsx` is the sign-in/account island (Privy modal `login()` → `auth.sync`; account view reads `auth.me`). |
 | `src/utils/orpc.ts` | oRPC client + TanStack Query bindings used by client components. Attaches the Privy access token (`getAccessToken()` → `Authorization: Bearer`) so protected procedures verify server-side. |
 
