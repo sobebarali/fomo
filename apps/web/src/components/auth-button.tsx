@@ -11,8 +11,9 @@ import {
   DropdownMenuTrigger,
 } from "@fomo/ui/components/dropdown-menu";
 import type { WalletWithMetadata } from "@privy-io/react-auth";
-import { useLogin, usePrivy } from "@privy-io/react-auth";
+import { useLogin, useLogout, usePrivy } from "@privy-io/react-auth";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { orpc } from "@/utils/orpc";
@@ -22,8 +23,10 @@ function truncate(address: string) {
 }
 
 export function AuthButton() {
-  const { ready, authenticated, user, logout } = usePrivy();
+  const { ready, authenticated, user } = usePrivy();
+  const router = useRouter();
   const { login } = useLogin();
+  const { logout } = useLogout({ onSuccess: () => router.push("/") });
   const [synced, setSynced] = useState(false);
 
   const { mutate: syncUser } = useMutation(
