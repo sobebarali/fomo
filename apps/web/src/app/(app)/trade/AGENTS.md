@@ -15,6 +15,9 @@
   position card, swap panel, and sticky `Sell` / `Buy {SYMBOL}` actions.
 - Every token reference (banner/list row) routes to `/trade/{address}` and the active row is matched
   by the route `address`.
+- `/trade` (no address) is the **dashboard entry**: `page.tsx` redirects to the top trending token
+  (fallback wrapped-SOL if trending is unavailable). Signed-in users hitting the landing are sent here
+  by the `LandingRedirect` island.
 
 ## Data + boundaries
 

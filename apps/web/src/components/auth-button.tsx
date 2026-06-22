@@ -69,13 +69,13 @@ export function AuthButton() {
     );
   }
 
-  const email = me.data?.email ?? user?.email?.address ?? "Account";
   const walletAddress = me.data?.walletAddress ?? solanaWalletAddress;
+  const accountLabel = walletAddress ? truncate(walletAddress) : "Account";
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger render={<Button size="sm" variant="outline" />}>
-        {email}
+        {accountLabel}
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         {walletAddress ? (

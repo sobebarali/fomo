@@ -2,11 +2,11 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 
-import { AuthButton } from "@/components/auth-button";
 import {
   TokenBanner,
   type TokenSummary,
 } from "@/components/banners/token-banner";
+import { LandingRedirect } from "@/components/landing-redirect";
 import { StartTradingButton } from "@/components/start-trading-button";
 import { StoreBadges } from "@/components/store-badges";
 import { client } from "@/utils/orpc";
@@ -135,7 +135,6 @@ function Nav() {
         >
           Google Play
         </a>
-        <AuthButton />
         <StartTradingButton size="sm" />
       </nav>
     </header>
@@ -449,6 +448,7 @@ export default async function LandingPage() {
 
   return (
     <>
+      <LandingRedirect />
       <TokenBanner tokens={tokens} />
       <Nav />
       <main>
