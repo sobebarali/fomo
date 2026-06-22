@@ -43,6 +43,7 @@ function Pill({
           className="rounded-full"
           height={LOGO_PX}
           src={token.logoUri}
+          style={{ height: LOGO_PX, width: LOGO_PX }}
           unoptimized
           width={LOGO_PX}
         />

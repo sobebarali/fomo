@@ -1,1 +1,46 @@
 @import "@fomo/ui/globals.css";
+
+.marquee {
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent,
+    #000 8%,
+    #000 92%,
+    transparent
+  );
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    #000 8%,
+    #000 92%,
+    transparent
+  );
+}
+
+.marquee__track {
+  display: flex;
+  width: max-content;
+  animation: marquee var(--marquee-duration, 45s) linear infinite;
+}
+
+.marquee--reverse .marquee__track {
+  animation-direction: reverse;
+}
+
+.marquee:hover .marquee__track,
+.marquee:focus-within .marquee__track {
+  animation-play-state: paused;
+}
+
+@keyframes marquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marquee__track {
+    animation: none !important;
+  }
+}
