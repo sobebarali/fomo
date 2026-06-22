@@ -18,7 +18,7 @@
 - **Access:** protected
 - **Input:** `z.object({ address: SolanaMint })`
 - **Output:** `{ address: string; amount: number; valueUsd: number; avgBuyUsd: number | null; pnlUsd: number | null; pnlPct: number | null }`
-- **Errors:** `UNAUTHORIZED` · `NOT_FOUND` (no position) · `RATE_LIMITED` · `UPSTREAM_ERROR`.
+- **Errors:** `UNAUTHORIZED` · `BAD_REQUEST` (invalid mint) · `NOT_FOUND` (no position) · `RATE_LIMITED` · `UPSTREAM_ERROR`.
 - **Side effects:** none.
 
 ## Conventions (Rule → Why)
@@ -26,12 +26,15 @@
 | Rule | Why |
 |------|------|
 | The wallet is the session's Privy address — never a client-supplied address. | A user can only read their own position (else `FORBIDDEN`); no spoofing. |
-| Balances from Alchemy, USD value from BirdEye prices; combine at the boundary. | Each source owns what it's best at; one place merges them. |
+| A null session wallet is `UNAUTHORIZED`. | A degraded valid session without an embedded Solana wallet cannot answer portfolio procedures honestly. |
+| Balances from Alchemy, USD value from BirdEye token detail; combine at the boundary. | Each source owns what it's best at; one place merges them. `birdeye.token()` also carries symbol/logo, so the router avoids a second metadata call. |
+| `totalValueUsd` includes native SOL valued through the wrapped-SOL mint (`So11111111111111111111111111111111111111112`). | This matches the universal Solana portfolio convention while keeping raw SOL exposed separately as `solBalance`. |
+| Unpriced tokens (`birdeye.token()` returns `null`) are skipped from `tokens[]`. | Spam/unlisted holdings should not fabricate symbols or inflate totals; `totalValueUsd` reflects priced holdings only. |
 | `avgBuyUsd`/`pnl*` are `null` when cost basis is unknown (no persisted trade history yet). | Honest nulls beat fabricated P/L (real-data rule); cost-basis tracking is a later, additive feature. |
 
 ## Dependencies
 
-- **Calls:** `alchemy.getTokenBalances(wallet)`, `birdeye` prices, `tokens` metadata. **Reads:** session wallet (`auth`). **Feeds:** trading-page position card.
+- **Calls:** `alchemy.getSolBalance(wallet)`, `alchemy.getTokenBalances(wallet)`, `birdeye.token({ address })`. **Reads:** session wallet (`auth`). **Feeds:** trading-page position card.
 
 ## Hardest invariant — own-wallet only, honest P/L
 
