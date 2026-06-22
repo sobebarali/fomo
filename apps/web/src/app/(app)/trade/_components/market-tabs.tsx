@@ -38,8 +38,9 @@ export function MarketTabs({
     enabled: active === "trades" && mounted,
     queryFn: () => client.trades.recent({ address, limit: 30 }),
     queryKey: ["trades", address],
-    refetchInterval: active === "trades" && mounted ? 15_000 : false,
-    staleTime: 15_000,
+    // 5s = the trades cache TTL; polling faster wouldn't return fresher data.
+    refetchInterval: active === "trades" && mounted ? 5000 : false,
+    staleTime: 5000,
   });
 
   const holders = useQuery({

@@ -45,8 +45,8 @@
 | Trending list + top/bottom banners | `tokens.trending` | server-seeded in `layout.tsx`; `TrendingSidebar` + `LiveTokenBanner` poll the shared `["trending-sidebar"]` key (30s) |
 | Token header / stats | `tokens.get` | **the only read `[address]/page.tsx` blocks on** (fast nav); `token-live.tsx` wrappers seed from it and poll the shared `["token", address]` key (10s) |
 | Chart render + range-tab refetch | `chart.candles` | client island (`lightweight-charts` area series); self-fetches per range with a skeleton, polls `LIVE` 15s / `1D` 20s |
-| Holders + live trades + tab state | `holders.list` / `trades.recent` | client islands; fetch on tab activation with a skeleton (no server seed), both poll 30s/15s |
-| Position | `portfolio.position` | protected client island; polls 15s after Privy auth |
+| Holders + live trades + tab state | `holders.list` / `trades.recent` | client islands; fetch on tab activation with a skeleton (no server seed); holders poll 30s, trades poll 5s (its cache TTL) |
+| Position | `portfolio.position` | protected client island; polls 5s after Privy auth (price cache TTL) |
 | Buy/sell quote + build/sign/send | `swap.quote` → `swap.buildTransaction` → Privy Solana wallet | client island; quote first, confirm before signing |
 
 ## Conventions (Rule → Why)
