@@ -126,7 +126,7 @@ export default async function TradePage({ params }: TradePageProps) {
           <div className="hidden lg:block">
             <TokenHeaderPanel token={token} />
           </div>
-          <ChartPanel candles={candles} error={chartError} />
+          <ChartPanel address={address} candles={candles} error={chartError} />
           <MobileStats token={token} />
           <div className="hidden lg:block">
             <MarketTabs

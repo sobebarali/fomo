@@ -23,6 +23,7 @@
     "babel-plugin-react-compiler": "^1.0.0",
     "dotenv": "catalog:",
     "evlog": "^2.18.1",
+    "lightweight-charts": "5.2.0",
     "lucide-react": "catalog:",
     "next": "catalog:",
     "next-themes": "catalog:",
