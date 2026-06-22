@@ -17,6 +17,11 @@ export const metadata: Metadata = {
     "From memecoins to viral tokens, trade any Solana token in seconds. Sign in with Apple or Google.",
 };
 
+// Render at request time, not at build: the banner's `tokens.trending` read is an oRPC self-call to
+// the running server, which doesn't exist during `next build` (BirdEye key isn't a build arg either),
+// so a static prerender bakes in an empty banner. Dynamic = live tokens like the trade page.
+export const dynamic = "force-dynamic";
+
 // All App-Store preview screenshots → one scrolling band.
 const SCREENS = [
   "discover",
