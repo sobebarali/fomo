@@ -1,5 +1,5 @@
 import { expect, it, vi } from "vitest";
-import { RateLimitError, UpstreamError } from "./errors";
+import { RateLimitError, UpstreamError } from "../_shared/errors";
 import { createRequester } from "./request";
 import { jsonResponse } from "./test-helpers";
 

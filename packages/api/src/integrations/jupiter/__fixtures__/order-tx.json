@@ -1,0 +1,52 @@
+{
+  "swapMode": "ExactIn",
+  "inputMint": "So11111111111111111111111111111111111111112",
+  "outputMint": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+  "inAmount": "10000",
+  "outAmount": "742",
+  "otherAmountThreshold": "738",
+  "slippageBps": 50,
+  "priceImpactPct": "0.0008043994521430792",
+  "priceImpact": 0.08043994521430792,
+  "routePlan": [
+    {
+      "percent": 100,
+      "bps": 10000,
+      "usdValue": 0.0007416683501945727,
+      "swapInfo": {
+        "ammKey": "proVF4pMXVaYqmy4NjniPh4pqKNfMmsihgd4wdkCX3u",
+        "label": "OKX DEX Router",
+        "inputMint": "So11111111111111111111111111111111111111112",
+        "outputMint": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+        "inAmount": "10000",
+        "outAmount": "742"
+      }
+    }
+  ],
+  "feeMint": "So11111111111111111111111111111111111111112",
+  "feeBps": 2,
+  "platformFee": {
+    "feeBps": 2,
+    "feeMint": "So11111111111111111111111111111111111111112"
+  },
+  "signatureFeeLamports": 5000,
+  "signatureFeePayer": "5tzFkiKscXHK5ZXCGbXZxdw7gTjjD1mBwuoFbhUvuAi9",
+  "prioritizationFeeLamports": 80191,
+  "prioritizationFeePayer": "5tzFkiKscXHK5ZXCGbXZxdw7gTjjD1mBwuoFbhUvuAi9",
+  "rentFeeLamports": 2039280,
+  "rentFeePayer": "5tzFkiKscXHK5ZXCGbXZxdw7gTjjD1mBwuoFbhUvuAi9",
+  "swapType": "aggregator",
+  "router": "okx",
+  "guaranteedPrice": false,
+  "transaction": "AQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAQAGCkjAG1BZAFRV2dywxrzs3LT7Wy6rwamoK1c5K6qkDwTmyE91j+HCjHVd15oifvEJCd3+ziq9FfrQB/fEnKK0sZ7exN5EZPC5fF7Dn+SK+CEsx3/tGVLagUl0jVROYkvrAA2EwXGYeJ7mWPxMVaF3vlYXCnmMNbOFc8E6pmUiBhwsAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACMlyWPTiSJ8bs9ECkUjg2DC1oTmdr/EIQEjnvY2+n4WQMGRm/lIRcy/+ytunLDm+e8jOW7xfcSayxDmzpAAAAACvHDQyGIyjpjUTWhOhiVGs69KeasLu04+R5t0bI7PFcMQpvXwY9Q+BVtmvwc3ect9mjZqzvsr2tXDVdmZFrZyAbd9uHXZaGT2cvhRs7reawctIXtX1s3kTqM9YV+/wCp616DLmcsBF4IBKyooeHFx0wXj8c/x4zwUS16XGlloewIBgAFAtaWAgAGAAkDBjYHAAAAAAAFBgADABgECQEBBAIAAwwCAAAAECcAAAAAAAAJAQMBEQUGAAIAFgQJAQEIIwADAhgWAQgSExEJCQUEFQgUEhMRCg8QDA4JGRcYFgsNBAQHMaopVbGEUB819OerOwAAAAAOJwAAAAAAAOYCAAAAAAAAMgABAAAACxAnAUANA4AAAAAJAwMAAAEJAnmo4CN/vUcAgTAsVXaRk1xVlfzGGKriH1qqYsorCjDuBwUOCREBCA8BB+SGu4nrPRxzklkyXg+xSChcPKJ7uK0KM5oClA9FhuIQAwMBAgVwPWs8QA==",
+  "lastValidBlockHeight": "406233194",
+  "gasless": false,
+  "jitOptimized": false,
+  "requestId": "019eef41-2036-7562-a9b5-e39024cf1290",
+  "taker": "5tzFkiKscXHK5ZXCGbXZxdw7gTjjD1mBwuoFbhUvuAi9",
+  "inUsdValue": 0.0007410722320970753,
+  "outUsdValue": 0.0007416683501945727,
+  "swapUsdValue": 0.0007416683501945727,
+  "mode": "manual",
+  "totalTime": 444
+}

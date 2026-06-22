@@ -1,6 +1,6 @@
 import { z } from "zod";
+import { parseData } from "../../_shared/parse";
 import type { AlchemyContext } from "../context";
-import { parseData } from "../parse";
 import type { TokenBalance } from "../schema";
 
 const TTL = 10_000;

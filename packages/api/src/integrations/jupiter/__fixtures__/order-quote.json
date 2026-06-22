@@ -1,0 +1,53 @@
+{
+  "inputMint": "So11111111111111111111111111111111111111112",
+  "outputMint": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+  "inAmount": "100000000",
+  "outAmount": "7411600",
+  "otherAmountThreshold": "7411600",
+  "swapMode": "ExactIn",
+  "slippageBps": 0,
+  "priceImpactPct": "-0.00032858666044422764",
+  "routePlan": [
+    {
+      "percent": 100,
+      "bps": 10000,
+      "usdValue": 7.408287256471826,
+      "swapInfo": {
+        "ammKey": "6UWsi9WKQbE5jLxLcycfr5NZ1DQGVNKUCkW1pzUaRVCE",
+        "label": "JupiterZ",
+        "inputMint": "So11111111111111111111111111111111111111112",
+        "outputMint": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+        "inAmount": "100000000",
+        "outAmount": "7411600"
+      }
+    }
+  ],
+  "feeMint": "So11111111111111111111111111111111111111112",
+  "feeBps": 2,
+  "transaction": null,
+  "gasless": true,
+  "jitOptimized": false,
+  "signatureFeeLamports": 0,
+  "signatureFeePayer": null,
+  "prioritizationFeeLamports": 0,
+  "prioritizationFeePayer": null,
+  "rentFeeLamports": 0,
+  "rentFeePayer": null,
+  "requestId": "019eef41-1e1e-7131-8228-02b286dedc30",
+  "swapType": "rfq",
+  "router": "jupiterz",
+  "guaranteedPrice": true,
+  "quoteId": "a1f6b935-2e0d-5524-afe2-c3dcdab49775",
+  "maker": "6UWsi9WKQbE5jLxLcycfr5NZ1DQGVNKUCkW1pzUaRVCE",
+  "taker": null,
+  "platformFee": {
+    "feeBps": 2,
+    "feeMint": "So11111111111111111111111111111111111111112"
+  },
+  "inUsdValue": 7.410722320970753,
+  "outUsdValue": 7.408287256471826,
+  "swapUsdValue": 7.408287256471826,
+  "priceImpact": -0.032858666044422766,
+  "mode": "manual",
+  "totalTime": 290
+}

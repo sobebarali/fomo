@@ -1,6 +1,6 @@
 import { env } from "@fomo/env/server";
-import { type Cache, createCache } from "./cache";
-import { createLimiter } from "./limiter";
+import { type Cache, createCache } from "../_shared/cache";
+import { createLimiter } from "../_shared/limiter";
 import { createRequester, type Requester } from "./request";
 
 const DEFAULT_RPS = 10;

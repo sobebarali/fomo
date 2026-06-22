@@ -27,11 +27,11 @@
 `createAlchemyClient(options?)` → the client; `alchemy` is the shared singleton routers import (one
 cache, one limiter, URL from `@fomo/env/server`). Options (all optional): `fetch` (default global —
 the test seam), `rpcUrl` (default `env.ALCHEMY_RPC_URL`), `requestsPerSecond` (default 10), `cacheMax`
-(default 500). `errors.ts` exports `RateLimitError` / `UpstreamError` for routers to `instanceof`-map;
-the `TokenBalance` view type lives in `schema.ts`.
+(default 500). [`_shared/errors.ts`](../_shared/AGENTS.md) exports `RateLimitError` / `UpstreamError`
+for routers to `instanceof`-map; the `TokenBalance` view type lives in `schema.ts`.
 
-Mirrors the **`birdeye/`** reference shape — `cache.ts` / `limiter.ts` / `errors.ts` / `parse.ts` are
-provider-agnostic and copied near-verbatim. The one real divergence: Alchemy is **JSON-RPC over POST**
+Mirrors the **`birdeye/`** reference shape — cache / limiter / errors / parse are the provider-agnostic
+[`_shared/`](../_shared/AGENTS.md) infra. The one real divergence: Alchemy is **JSON-RPC over POST**
 (key embedded in `rpcUrl`), so `request.ts` POSTs `{ jsonrpc, id, method, params }` and validates the
 `{ result?, error? }` envelope (`schema.ts` `RpcResponse`); each method then validates `result` with
 its own schema via `parseData`.
@@ -50,9 +50,9 @@ Zod-parse failure → `UpstreamError` (messages carry no URL/key).
 - **Classic SPL Token program only** (`TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`) — pump.fun /
   memecoins are classic SPL. Token-2022 needs a 2nd `getTokenAccountsByOwner` call (the Token-2022
   program id) merged in; deferred (`// ponytail:` in `token-balances.ts`).
-- **Copied birdeye's infra** rather than extracting a shared `_shared/` — matches the reference-shape
-  convention, touches no working code. Extract on the 3rd integration (jupiter).
-- **No `cache`/`limiter` unit tests** here — identical copies already proven in `birdeye/`.
+- **Infra extracted to [`_shared/`](../_shared/AGENTS.md)** (cache/limiter/errors/parse) on the 3rd
+  integration (jupiter), as this note originally planned — birdeye + alchemy now import it.
+- **No `cache`/`limiter` unit tests** here — canonical copies live in `_shared/`.
 
 ## Testing
 

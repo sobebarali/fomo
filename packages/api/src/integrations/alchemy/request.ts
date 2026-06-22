@@ -1,5 +1,5 @@
-import { RateLimitError, UpstreamError } from "./errors";
-import type { Limiter } from "./limiter";
+import { RateLimitError, UpstreamError } from "../_shared/errors";
+import type { Limiter } from "../_shared/limiter";
 import { RpcResponse } from "./schema";
 
 export type Requester = (method: string, params: unknown[]) => Promise<unknown>;

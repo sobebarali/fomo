@@ -1,6 +1,6 @@
 import { z } from "zod";
+import { parseData } from "../../_shared/parse";
 import type { BirdEyeContext } from "../context";
-import { parseData } from "../parse";
 import type { TokenDetail } from "../schema";
 
 const TTL = 30_000;

@@ -1,6 +1,6 @@
 import { z } from "zod";
+import { parseData } from "../../_shared/parse";
 import type { AlchemyContext } from "../context";
-import { parseData } from "../parse";
 
 const TTL = 10_000;
 const LAMPORTS_PER_SOL = 1_000_000_000;

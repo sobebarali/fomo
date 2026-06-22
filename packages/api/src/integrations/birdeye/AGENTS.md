@@ -49,7 +49,8 @@ the test seam), `apiKey` (default `env.BIRDEYE_API_KEY`), `baseUrl`, `requestsPe
 `cacheMax` (default 500). Exports `RateLimitError` / `UpstreamError` for routers to `instanceof`-map.
 
 **Cache + limiter — decision (Rule 16):** hand-rolled, **zero new deps** — a bounded-TTL `Map`
-(FIFO-evict at `cacheMax`) + a token-bucket limiter. Rejected `lru-cache` / `p-throttle`: on Vercel
+(FIFO-evict at `cacheMax`) + a token-bucket limiter, now in [`_shared/`](../_shared/AGENTS.md) (cache /
+limiter / errors / parse, extracted on the 3rd integration). Rejected `lru-cache` / `p-throttle`: on Vercel
 serverless both are per-instance regardless (reset on cold start, no cross-instance coordination), so
 a dep buys little; a shared Upstash/Redis limit is the only true fleet-wide control and is out of M12
 scope. Add it if/when a fleet-wide limit is needed.
@@ -76,7 +77,7 @@ carry no key).
 | `index.ts` | `createBirdEyeClient(opts)` (assembles the context, wires every method) + the `birdeye` singleton; re-exports the view types + errors (the public surface). |
 | `context.ts` | `createContext(opts) → { request, cache }` + `BirdEyeClientOptions` — builds the limiter, requester, and cache **once** (one cache, one limiter shared by all methods). |
 | `request.ts` | the shared transport: rate-limit → `fetch` (key header) → status/JSON/envelope error mapping. |
-| `cache.ts` · `limiter.ts` · `errors.ts` · `parse.ts` | bounded TTL cache · token-bucket limiter · `RateLimitError`/`UpstreamError` · `parseData` (Zod-fail → `UpstreamError`). |
+| [`_shared/`](../_shared/AGENTS.md) | `cache.ts` · `limiter.ts` · `errors.ts` · `parse.ts` — bounded TTL cache · token-bucket limiter · `RateLimitError`/`UpstreamError` · `parseData` (shared by every integration). |
 | `schema.ts` | **shared** view types (`TokenSummary`/`TokenDetail`/`Candle`/`Holder`/`Trade`) + `Envelope` + `TrendingSort`. Promote to `src/schemas/token.ts` once a 2nd module needs them. |
 | `methods/<name>.ts` | one method each — `makeX(ctx)` factory + its raw upstream schema + normalizer + TTL colocated. |
 | `__fixtures__/*.json` | real BirdEye payloads the method tests assert against. |
