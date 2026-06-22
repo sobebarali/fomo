@@ -9,15 +9,15 @@
 ### `quote` — price a buy or sell
 - **Access:** public
 - **Input:** `z.object({ inputMint: SolanaMint, outputMint: SolanaMint, amount: z.string(), slippageBps: z.number().int().min(1).max(5000).default(50) })` (`amount` = base-unit string to avoid float loss)
-- **Output:** `{ inAmount: string; outAmount: string; priceImpactPct: number; slippageBps: number; routePlan: Array<{ label: string; percent: number }>; quoteId: string }`
+- **Output:** `{ inAmount: string; outAmount: string; otherAmountThreshold: string; priceImpactPct: number; slippageBps: number; routePlan: Array<{ label: string; percent: number }> }`
 - **Errors:** `BAD_REQUEST` (invalid mint/amount) · `UPSTREAM_ERROR` (no route / Jupiter down) · `RATE_LIMITED`.
 - **Side effects:** none.
 
 ### `buildTransaction` — the unsigned swap tx for the user to sign
 - **Access:** protected
-- **Input:** `z.object({ quoteId: z.string(), userPublicKey: SolanaAddress })`
+- **Input:** `z.object({ inputMint: SolanaMint, outputMint: SolanaMint, amount: z.string(), slippageBps: z.number().int().min(1).max(5000).default(50), userPublicKey: SolanaAddress })`
 - **Output:** `{ swapTransaction: string }` (base64 unsigned tx; client signs with Privy + submits)
-- **Errors:** `UNAUTHORIZED` · `BAD_REQUEST` (stale/unknown `quoteId`) · `UPSTREAM_ERROR`.
+- **Errors:** `UNAUTHORIZED` · `BAD_REQUEST` (invalid mint/address/amount) · `UPSTREAM_ERROR` · `RATE_LIMITED`.
 - **Side effects:** none on our DB; Jupiter builds the tx. The user's wallet executes it client-side.
 
 ## Conventions (Rule → Why)
@@ -33,9 +33,17 @@
 
 - **Calls:** `jupiter.quote(...)`, `jupiter.swapTransaction(...)` ([`../../integrations/jupiter`](../../integrations/jupiter)). **Feeds:** trading-page buy/sell panel.
 
+## Decisions (CET-224)
+
+- **Parameter-based build, no server-side `quoteId` registry.** Jupiter Swap V2 builds an unsigned
+  transaction from the same quote parameters plus `taker` (`userPublicKey`). Keeping our own ephemeral
+  `quoteId` cache would break across serverless instances/restarts and add no signing safety.
+- **No `requestId` in this router yet.** Jupiter returns it for later execute/submit flows, but this
+  ticket only exposes quote + unsigned transaction build.
+
 ## Hardest invariant — quote integrity, no server signing
 
-`buildTransaction` produces a tx that matches the `quote` it references (same amounts/slippage) and is
+`buildTransaction` produces a tx from the same explicit trade params the UI quoted (same amounts/slippage) and is
 **unsigned** — there is no code path where the server signs or holds a key. Test mocks the Jupiter
 client: quote shape, base-unit strings preserved, unsigned tx returned, no-route → `UPSTREAM_ERROR`,
 anonymous `buildTransaction` → `UNAUTHORIZED`.
