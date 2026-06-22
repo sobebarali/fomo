@@ -10,7 +10,7 @@
 |------|------|
 | `cache.ts` | `createCache(max) → Cache` — bounded read-through TTL cache (FIFO-evict at `max`); a hit takes no rate-limit token. |
 | `limiter.ts` | `createLimiter(rps) → Limiter` — in-memory token bucket; per-instance (adequate for Vercel serverless). |
-| `errors.ts` | `RateLimitError` (→ `RATE_LIMITED`) · `UpstreamError` (→ `UPSTREAM_ERROR`). Generic default messages; **never carry an API key**. |
+| `errors.ts` | `RateLimitError` (→ `RATE_LIMITED`) · `UpstreamError` (→ `UPSTREAM_ERROR`) · `BadRequestError` (→ `BAD_REQUEST`; its message **is** surfaced to the user — for a request the upstream rejects as unfulfillable, e.g. "Insufficient funds"). **Never carry an API key**. |
 | `parse.ts` | `parseData(schema, data)` — Zod `safeParse`; a failure becomes `UpstreamError`. |
 
 ## Conventions (Rule → Why)

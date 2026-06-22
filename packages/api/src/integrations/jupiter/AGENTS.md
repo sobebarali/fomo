@@ -26,7 +26,7 @@ signed tx via `POST /swap/v2/execute` is the swap router's job — out of scope 
 |------|------|
 | Amounts in/out are base-unit **strings**, passed through untouched. | A JS-number round-trip silently corrupts large token amounts. |
 | Returns an **unsigned** transaction only — signing is client-side via Privy. | The server never holds private keys (root domain rule). |
-| No route / non-2xx / empty `transaction`+`errorCode` → `UpstreamError` (→ `UPSTREAM_ERROR`); `429` → `RateLimitError` (→ `RATE_LIMITED`). | Illiquid tokens & insufficient funds shouldn't 500; stable codes. |
+| `quote` no-route / non-2xx / empty `transaction` (no `errorCode`) → `UpstreamError` (→ `UPSTREAM_ERROR`); `swapTransaction` order `errorCode` → `BadRequestError` carrying Jupiter's `errorMessage` (→ `BAD_REQUEST`, shown to the user); `429` → `RateLimitError` (→ `RATE_LIMITED`). | Insufficient funds is user-actionable (show the reason, don't 500); illiquid/down stays a stable upstream code. |
 | Key from `@fomo/env/server` only, in the `x-api-key` header; never in a URL, log, or error message. | Root domain rule — secrets never reach the browser. |
 | Injectable `fetch` for tests. | Mock without the network. |
 
@@ -54,8 +54,9 @@ the test seam), `apiKey` (default `env.JUPITER_API_KEY`; omit for the keyless ti
 | `quote` | `GET /swap/v2/order?inputMint=&outputMint=&amount=&slippageBps=` | 5s (quotes go stale fast) |
 | `swapTransaction` | `GET /swap/v2/order?…&taker=` | **uncached** (tx is taker-specific + blockhash-expiring) |
 
-`429` → `RateLimitError`; any other non-2xx, transport failure, invalid JSON, no-route (`errorCode` /
-missing `outAmount`), or empty-`transaction`+`errorCode` → `UpstreamError` (messages carry no key).
+`429` → `RateLimitError`; any other non-2xx, transport failure, invalid JSON, `quote` no-route
+(missing `outAmount`), or empty `transaction` with no `errorCode` → `UpstreamError`. A `swapTransaction`
+order `errorCode` → `BadRequestError(errorMessage)` (→ `BAD_REQUEST`, surfaced to the user). Messages carry no key.
 
 **File layout — one function per file (feature-colocated).**
 

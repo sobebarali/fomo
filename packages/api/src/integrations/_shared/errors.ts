@@ -14,3 +14,13 @@ export class UpstreamError extends Error {
     this.name = "UpstreamError";
   }
 }
+
+/** Thrown when the upstream rejects the specific request as unfulfillable (e.g. Jupiter's order
+ *  `errorCode` "Insufficient funds"). Routers map this → `BAD_REQUEST` and surface the message to the
+ *  user — it's user-actionable, not a 500. Messages never contain an API key. */
+export class BadRequestError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "BadRequestError";
+  }
+}

@@ -3,6 +3,7 @@ import { createTestDb } from "@fomo/db/testing";
 import { call } from "@orpc/server";
 import { afterAll, afterEach, beforeAll, expect, it, vi } from "vitest";
 import {
+  BadRequestError,
   RateLimitError,
   UpstreamError,
 } from "../../integrations/_shared/errors";
@@ -199,5 +200,27 @@ it("returns an unsigned transaction for an authenticated user", async () => {
   });
   expect(result).toEqual({
     swapTransaction: "AQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+  });
+});
+
+it("maps a Jupiter build rejection to BAD_REQUEST and surfaces its message", async () => {
+  mockSwapTransaction.mockRejectedValue(
+    new BadRequestError("Insufficient funds")
+  );
+
+  await expect(
+    call(
+      appRouter.swap.buildTransaction,
+      {
+        amount: BASE_UNIT_AMOUNT,
+        inputMint: INPUT_MINT,
+        outputMint: OUTPUT_MINT,
+        userPublicKey: USER_PUBLIC_KEY,
+      },
+      { context: testContext(db, session) }
+    )
+  ).rejects.toMatchObject({
+    code: "BAD_REQUEST",
+    message: "Insufficient funds",
   });
 });

@@ -76,7 +76,7 @@ export function SwapPanel({ token }: { token: TokenDetail | null }) {
       });
       return result.signature;
     },
-    onError: (error) => setStatus(error.message),
+    onError: (error) => setStatus(toSwapError(error)),
     onSuccess: () => setStatus("Transaction submitted."),
   });
 
@@ -159,6 +159,23 @@ export function SwapPanel({ token }: { token: TokenDetail | null }) {
       />
     </section>
   );
+}
+
+/** A user-facing swap error: prefer the server's reason (`BAD_REQUEST` carries Jupiter's message,
+ *  e.g. "Insufficient funds"), but never show a raw `UPSTREAM_ERROR` code. */
+function toSwapError(error: unknown): string {
+  if (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    (error as { code?: string }).code === "UPSTREAM_ERROR"
+  ) {
+    return "Couldn't build this swap right now. Please try again.";
+  }
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
+  return "Swap failed. Please try again.";
 }
 
 function modeButtonClass(current: Mode, next: Mode): string {

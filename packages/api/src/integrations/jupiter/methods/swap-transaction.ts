@@ -1,4 +1,4 @@
-import { UpstreamError } from "../../_shared/errors";
+import { BadRequestError, UpstreamError } from "../../_shared/errors";
 import { parseData } from "../../_shared/parse";
 import type { JupiterContext } from "../context";
 import { OrderResponse, type SwapTxResult } from "../schema";
@@ -31,8 +31,14 @@ export function makeSwapTransaction(ctx: JupiterContext) {
       taker: userPublicKey,
     });
     const order = parseData(OrderResponse, raw);
-    if (!order.transaction || order.errorCode != null) {
-      throw new UpstreamError("Jupiter could not build a swap transaction");
+    if (order.errorCode != null) {
+      // User-actionable (e.g. "Insufficient funds") — surface Jupiter's reason, don't 500.
+      throw new BadRequestError(
+        order.errorMessage ?? "Jupiter could not build a swap transaction"
+      );
+    }
+    if (!order.transaction) {
+      throw new UpstreamError("Jupiter returned no swap transaction");
     }
     return {
       swapTransaction: order.transaction,

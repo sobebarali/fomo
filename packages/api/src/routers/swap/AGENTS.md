@@ -17,7 +17,7 @@
 - **Access:** protected
 - **Input:** `z.object({ inputMint: SolanaMint, outputMint: SolanaMint, amount: z.string(), slippageBps: z.number().int().min(1).max(5000).default(50), userPublicKey: SolanaAddress })`
 - **Output:** `{ swapTransaction: string }` (base64 unsigned tx; client signs with Privy + submits)
-- **Errors:** `UNAUTHORIZED` · `BAD_REQUEST` (invalid mint/address/amount) · `UPSTREAM_ERROR` · `RATE_LIMITED`.
+- **Errors:** `UNAUTHORIZED` · `BAD_REQUEST` (invalid mint/address/amount, **or** Jupiter rejects the build for this taker — e.g. "Insufficient funds" — with its `errorMessage` surfaced for the UI to show) · `UPSTREAM_ERROR` · `RATE_LIMITED`.
 - **Side effects:** none on our DB; Jupiter builds the tx. The user's wallet executes it client-side.
 
 ## Conventions (Rule → Why)
@@ -27,7 +27,7 @@
 | Amounts are base-unit **strings**, never JS numbers. | Token amounts exceed `Number.MAX_SAFE_INTEGER`; a float silently corrupts the trade. |
 | `slippageBps` is explicit + surfaced to the UI; default 0.5%. | The user must see/confirm slippage before signing (root domain rule). |
 | The server returns an **unsigned** tx only; signing is client-side via Privy. | The server never holds private keys (root domain rule). |
-| Map "no route found" and Jupiter failures to `UPSTREAM_ERROR`; invalid input to `BAD_REQUEST`. | Stable codes; a thin illiquid token shouldn't 500. |
+| Map "no route found" and Jupiter outages to `UPSTREAM_ERROR`; invalid input **and** a per-taker build rejection (Jupiter's order `errorCode`, e.g. insufficient funds) to `BAD_REQUEST` with the reason surfaced. | Stable codes; a thin illiquid token shouldn't 500, and "Insufficient funds" is the user's to fix — show it, not a generic error. |
 
 ## Dependencies
 

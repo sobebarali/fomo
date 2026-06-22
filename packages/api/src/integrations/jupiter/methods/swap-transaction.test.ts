@@ -1,5 +1,5 @@
 import { expect, it } from "vitest";
-import { UpstreamError } from "../../_shared/errors";
+import { BadRequestError, UpstreamError } from "../../_shared/errors";
 // fixture: REAL — captured from the live Jupiter API (GET /swap/v2/order with a funded taker).
 import orderTx from "../__fixtures__/order-tx.json";
 import { jsonResponse, makeClient } from "../test-helpers";
@@ -36,7 +36,7 @@ it("sends the taker as the order's `taker` so Jupiter assembles the tx", async (
   expect(url).toContain("taker=5tzFkiKscXHK5ZXCGbXZxdw7gTjjD1mBwuoFbhUvuAi9");
 });
 
-it("throws UpstreamError when the order can't be built (empty tx + errorCode)", async () => {
+it("surfaces Jupiter's errorMessage as a BadRequestError (e.g. insufficient funds)", async () => {
   const failed = {
     ...orderTx,
     transaction: "",
@@ -44,6 +44,15 @@ it("throws UpstreamError when the order can't be built (empty tx + errorCode)", 
     errorMessage: "Insufficient funds",
   };
   const { client } = makeClient(() => Promise.resolve(jsonResponse(failed)));
+
+  const error = await client.swapTransaction(PARAMS).catch((e: unknown) => e);
+  expect(error).toBeInstanceOf(BadRequestError);
+  expect((error as BadRequestError).message).toBe("Insufficient funds");
+});
+
+it("throws UpstreamError when the order is empty with no errorCode", async () => {
+  const empty = { ...orderTx, transaction: "" };
+  const { client } = makeClient(() => Promise.resolve(jsonResponse(empty)));
 
   await expect(client.swapTransaction(PARAMS)).rejects.toBeInstanceOf(
     UpstreamError
