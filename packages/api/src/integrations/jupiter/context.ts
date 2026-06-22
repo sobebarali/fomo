@@ -4,9 +4,10 @@ import { createLimiter } from "../_shared/limiter";
 import { createRequester, type Requester } from "./request";
 
 const BASE_URL = "https://api.jup.ag";
-// Jupiter's keyless tier is ~0.5 RPS; an API key raises it. The default assumes a key is set (env
-// mandates JUPITER_API_KEY) — pass `requestsPerSecond: 0.5` when exercising the keyless tier.
-const DEFAULT_RPS = 10;
+// Jupiter Free plan (with API key) = 1 rps; keyless = 0.5 rps (dev.jup.ag/docs/portal/rate-limits).
+// Default assumes a Free key (env mandates JUPITER_API_KEY) — pass `requestsPerSecond: 0.5` for keyless,
+// or 10 for the paid Developer tier. (/execute + /submit have separate buckets, not used here.)
+const DEFAULT_RPS = 1;
 const DEFAULT_CACHE_MAX = 500;
 
 export interface JupiterClientOptions {

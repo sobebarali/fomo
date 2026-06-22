@@ -3,7 +3,9 @@ import { type Cache, createCache } from "../_shared/cache";
 import { createLimiter } from "../_shared/limiter";
 import { createRequester, type Requester } from "./request";
 
-const DEFAULT_RPS = 10;
+// Alchemy free tier = 500 CU/s throughput; our JSON-RPC calls cost ~10 CU each, so ~25 rps is the
+// advertised free ceiling (alchemy.com/pricing). Pass `requestsPerSecond` to raise on a paid plan.
+const DEFAULT_RPS = 25;
 const DEFAULT_CACHE_MAX = 500;
 
 export interface AlchemyClientOptions {

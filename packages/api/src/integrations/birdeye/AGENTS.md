@@ -45,7 +45,8 @@ Each method validates the upstream payload with Zod and returns typed data or th
 
 `createBirdEyeClient(options?)` → the client; `birdeye` is the shared singleton routers import (one
 cache, one limiter, key from `@fomo/env/server`). Options (all optional): `fetch` (default global —
-the test seam), `apiKey` (default `env.BIRDEYE_API_KEY`), `baseUrl`, `requestsPerSecond` (default 10),
+the test seam), `apiKey` (default `env.BIRDEYE_API_KEY`), `baseUrl`, `requestsPerSecond` (default **1** —
+the free Standard tier's per-account limit; raise on a paid plan: Lite/Starter 15, Premium 50),
 `cacheMax` (default 500). Routers `instanceof`-map `RateLimitError` / `UpstreamError` imported directly
 from [`../_shared/errors`](../_shared/errors.ts), and import the view types from [`./schema`](./schema.ts)
 — `index.ts` exports no re-export barrel (the `noBarrelFile` lint rule forbids `export … from` here).

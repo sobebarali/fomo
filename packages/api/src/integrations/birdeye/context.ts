@@ -4,7 +4,9 @@ import { createLimiter } from "../_shared/limiter";
 import { createRequester, type Requester } from "./request";
 
 const BASE_URL = "https://public-api.birdeye.so";
-const DEFAULT_RPS = 10;
+// BirdEye Standard (free) = 1 rps per account across all APIs (docs.birdeye.so/docs/rate-limiting).
+// Pass `requestsPerSecond` to raise it on a paid plan (Lite/Starter = 15, Premium = 50).
+const DEFAULT_RPS = 1;
 const DEFAULT_CACHE_MAX = 500;
 
 export interface BirdEyeClientOptions {

@@ -26,7 +26,8 @@
 
 `createAlchemyClient(options?)` → the client; `alchemy` is the shared singleton routers import (one
 cache, one limiter, URL from `@fomo/env/server`). Options (all optional): `fetch` (default global —
-the test seam), `rpcUrl` (default `env.ALCHEMY_RPC_URL`), `requestsPerSecond` (default 10), `cacheMax`
+the test seam), `rpcUrl` (default `env.ALCHEMY_RPC_URL`), `requestsPerSecond` (default **25** — the free
+tier's ~500 CU/s ceiling for our ~10-CU calls; raise on a paid plan), `cacheMax`
 (default 500). [`_shared/errors.ts`](../_shared/AGENTS.md) exports `RateLimitError` / `UpstreamError`
 for routers to `instanceof`-map; the `TokenBalance` view type lives in `schema.ts`.
 

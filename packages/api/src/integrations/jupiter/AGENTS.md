@@ -35,7 +35,8 @@ signed tx via `POST /swap/v2/execute` is the swap router's job — out of scope 
 `createJupiterClient(options?)` → the client; `jupiter` is the shared singleton routers import (one
 cache, one limiter, key from `@fomo/env/server`). Options (all optional): `fetch` (default global —
 the test seam), `apiKey` (default `env.JUPITER_API_KEY`; omit for the keyless tier), `baseUrl`,
-`requestsPerSecond` (default 10 — set **0.5** for keyless), `cacheMax` (default 500). Infra
+`requestsPerSecond` (default **1** — the Free plan's per-account limit; **0.5** keyless, **10** paid Developer),
+`cacheMax` (default 500). Infra
 (cache/limiter/errors/parse) comes from [`../_shared/`](../_shared/AGENTS.md).
 
 **Decisions (Rule 16):**
