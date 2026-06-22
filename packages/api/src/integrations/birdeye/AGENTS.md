@@ -46,7 +46,9 @@ Each method validates the upstream payload with Zod and returns typed data or th
 `createBirdEyeClient(options?)` → the client; `birdeye` is the shared singleton routers import (one
 cache, one limiter, key from `@fomo/env/server`). Options (all optional): `fetch` (default global —
 the test seam), `apiKey` (default `env.BIRDEYE_API_KEY`), `baseUrl`, `requestsPerSecond` (default 10),
-`cacheMax` (default 500). Exports `RateLimitError` / `UpstreamError` for routers to `instanceof`-map.
+`cacheMax` (default 500). Routers `instanceof`-map `RateLimitError` / `UpstreamError` imported directly
+from [`../_shared/errors`](../_shared/errors.ts), and import the view types from [`./schema`](./schema.ts)
+— `index.ts` exports no re-export barrel (the `noBarrelFile` lint rule forbids `export … from` here).
 
 **Cache + limiter — decision (Rule 16):** hand-rolled, **zero new deps** — a bounded-TTL `Map`
 (FIFO-evict at `cacheMax`) + a token-bucket limiter, now in [`_shared/`](../_shared/AGENTS.md) (cache /
@@ -74,7 +76,7 @@ carry no key).
 
 | File | Owns |
 |------|------|
-| `index.ts` | `createBirdEyeClient(opts)` (assembles the context, wires every method) + the `birdeye` singleton; re-exports the view types + errors (the public surface). |
+| `index.ts` | `createBirdEyeClient(opts)` (assembles the context, wires every method) + the `birdeye` singleton. No re-export barrel — consumers import errors from `_shared/errors`, view types from `schema.ts`. |
 | `context.ts` | `createContext(opts) → { request, cache }` + `BirdEyeClientOptions` — builds the limiter, requester, and cache **once** (one cache, one limiter shared by all methods). |
 | `request.ts` | the shared transport: rate-limit → `fetch` (key header) → status/JSON/envelope error mapping. |
 | [`_shared/`](../_shared/AGENTS.md) | `cache.ts` · `limiter.ts` · `errors.ts` · `parse.ts` — bounded TTL cache · token-bucket limiter · `RateLimitError`/`UpstreamError` · `parseData` (shared by every integration). |
