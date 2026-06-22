@@ -63,7 +63,7 @@ export default async function TradeLayout({
       </div>
       <TradeTopBar />
       <FloatingAlert />
-      <div className="grid lg:h-[calc(100svh-137px)] lg:grid-cols-[320px_minmax(0,1fr)]">
+      <div className="grid lg:h-[calc(100svh-137px)] lg:grid-cols-[320px_minmax(0,1fr)_360px]">
         <TrendingSidebar result={trending} />
         {children}
       </div>

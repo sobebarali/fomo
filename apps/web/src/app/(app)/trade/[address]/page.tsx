@@ -99,52 +99,52 @@ export default async function TradePage({ params }: TradePageProps) {
     trades.error,
   ].includes("RATE_LIMITED");
 
-  // Only the per-token content region — the persistent chrome (banners, top bar, trending sidebar)
-  // lives in the route `layout.tsx`, so switching tokens re-renders just this slot, not the app.
+  // Only the per-token content — `section` (col 2) + `aside` (col 3) are direct grid items of the
+  // layout's 3-column grid; the mobile-only header/swap-bar are `lg:hidden` so they take no desktop
+  // grid cell. The persistent chrome (banners, top bar, trending sidebar) lives in `layout.tsx`, so
+  // switching tokens re-renders just these slots, not the whole app.
   return (
-    <div className="min-w-0">
+    <>
       <MobileTokenHeader token={token} />
       {rateLimited ? <RateLimitRefresher /> : null}
-      <div className="grid lg:h-full lg:grid-cols-[minmax(0,1fr)_360px]">
-        <section className="min-w-0 overflow-y-auto pb-40 lg:pb-0">
-          <div className="hidden lg:block">
-            <TokenHeaderPanel token={token} />
-          </div>
-          <ChartPanel address={address} candles={candles} error={chartError} />
-          <MobileStats token={token} />
-          <div className="hidden lg:block">
-            <MarketTabs
-              address={address}
-              holders={holderRows}
-              holdersError={holdersError}
-              initialTrades={tradeRows}
-              token={token}
-              variant="desktop"
-            />
-          </div>
-          <div className="lg:hidden">
-            <MarketTabs
-              address={address}
-              holders={holderRows}
-              holdersError={holdersError}
-              initialTrades={tradeRows}
-              token={token}
-              variant="mobile"
-            />
-          </div>
-          <div className="lg:hidden">
-            <PositionCard address={address} />
-            <div id="swap-panel">
-              <SwapPanel token={token} />
-            </div>
-          </div>
-        </section>
-        <aside className="hidden min-h-0 flex-col gap-3 overflow-y-auto border-white/10 border-l bg-[#080c0d] p-3 lg:flex">
-          <SwapPanel token={token} />
+      <section className="min-w-0 overflow-y-auto pb-40 lg:pb-0">
+        <div className="hidden lg:block">
+          <TokenHeaderPanel token={token} />
+        </div>
+        <ChartPanel address={address} candles={candles} error={chartError} />
+        <MobileStats token={token} />
+        <div className="hidden lg:block">
+          <MarketTabs
+            address={address}
+            holders={holderRows}
+            holdersError={holdersError}
+            initialTrades={tradeRows}
+            token={token}
+            variant="desktop"
+          />
+        </div>
+        <div className="lg:hidden">
+          <MarketTabs
+            address={address}
+            holders={holderRows}
+            holdersError={holdersError}
+            initialTrades={tradeRows}
+            token={token}
+            variant="mobile"
+          />
+        </div>
+        <div className="lg:hidden">
           <PositionCard address={address} />
-        </aside>
-      </div>
+          <div id="swap-panel">
+            <SwapPanel token={token} />
+          </div>
+        </div>
+      </section>
+      <aside className="hidden min-h-0 flex-col gap-3 overflow-y-auto border-white/10 border-l bg-[#080c0d] p-3 lg:flex">
+        <SwapPanel token={token} />
+        <PositionCard address={address} />
+      </aside>
       <MobileSwapBar token={token} />
-    </div>
+    </>
   );
 }
