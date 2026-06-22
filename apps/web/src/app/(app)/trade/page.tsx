@@ -14,8 +14,10 @@ const FALLBACK_MINT = "So11111111111111111111111111111111111111112";
 async function topTrendingMint(api: AppRouterClient): Promise<string> {
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
+      // limit:30 matches the `/trade/[address]` page's trending fetch, so they share one cache
+      // entry — the redirect warms it and the page render reads it back instead of a second hit.
       const trending = await api.tokens.trending({
-        limit: 1,
+        limit: 30,
         sort: "trending",
       });
       return trending.items[0]?.address ?? FALLBACK_MINT;

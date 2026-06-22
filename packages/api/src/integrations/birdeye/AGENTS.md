@@ -62,7 +62,7 @@ scope. Add it if/when a fleet-wide limit is needed.
 
 | Method | `GET` path | TTL |
 |--------|-----------|-----|
-| `trending` | `/defi/token_trending` (`sort_by`/`sort_type` from `sort`) | 15s |
+| `trending` | `/defi/token_trending` (`sort_by`/`sort_type` from `sort`) | 60s (redirect + sidebar + banners share it every /trade visit) |
 | `token` | `/defi/token_overview?address=` (null/`success:false` → `null` → router `NOT_FOUND`) | 30s |
 | `ohlcv` | `/defi/ohlcv?address=&type=&time_from=&time_to=` | 300s (ranges immutable) |
 | `holders` | `/defi/v3/token/holder?address=&offset=0&limit=` | 30s |

@@ -4,7 +4,10 @@ import { parseData } from "../../_shared/parse";
 import type { BirdEyeContext } from "../context";
 import type { TokenSummary, TrendingSort } from "../schema";
 
-const TTL = 15_000;
+// 60s: "trending" shifts slowly and this list feeds the redirect, sidebar, and banners on every
+// /trade visit — a longer TTL keeps the persistent (Railway) in-memory cache warm and well under
+// the free-tier RPS instead of re-hitting BirdEye per page load.
+const TTL = 60_000;
 
 // sort_by ∈ {rank, volumeUSD, liquidity} per BirdEye — "gainers"/"new" use the closest proxy.
 const TRENDING_SORT: Record<TrendingSort, { by: string; type: string }> = {
