@@ -1,0 +1,28 @@
+{
+  "mcp": {
+    "better-t-stack": {
+      "type": "local",
+      "command": ["bunx", "create-better-t-stack@latest", "mcp"],
+      "enabled": true,
+      "environment": {}
+    },
+    "context7": {
+      "type": "local",
+      "command": ["npx", "-y", "@upstash/context7-mcp"],
+      "enabled": true,
+      "environment": {}
+    },
+    "shadcn": {
+      "type": "local",
+      "command": ["npx", "-y", "shadcn@latest", "mcp"],
+      "enabled": true,
+      "environment": {}
+    },
+    "next-devtools": {
+      "type": "local",
+      "command": ["npx", "-y", "next-devtools-mcp@latest"],
+      "enabled": true,
+      "environment": {}
+    }
+  }
+}

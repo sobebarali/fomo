@@ -1,0 +1,28 @@
+{
+  "mcpServers": {
+    "better-t-stack": {
+      "command": "bunx",
+      "args": ["create-better-t-stack@latest", "mcp"]
+    },
+    "context7": {
+      "command": "npx",
+      "args": ["-y", "@upstash/context7-mcp"]
+    },
+    "shadcn": {
+      "command": "npx",
+      "args": ["-y", "shadcn@latest", "mcp"]
+    },
+    "next-devtools": {
+      "command": "npx",
+      "args": ["-y", "next-devtools-mcp@latest"]
+    },
+    "linear": {
+      "command": "npx",
+      "args": ["-y", "mcp-remote", "https://mcp.linear.app/mcp"]
+    },
+    "penpot": {
+      "type": "http",
+      "url": "https://design.penpot.app/mcp/stream?userToken=eyJhbGciOiJBMjU2S1ciLCJlbmMiOiJBMjU2R0NNIn0.rzjw6uWs_DDUX_Iwu4RSLlzBrq4KMrhmtzjkYCw4Cf3uc0yHWsoqEQ.ID0NrC4VKBi7IqY5.8KeAzZs5ZK8nVORAyI_pkuhB3j8sFYWGuVaXuSbtJN55Km7tMmbLUeO0PGI-5X-_-Kmvh8lAhmmzMXGbIoV5EGJVLdbSuqqbJ_NOIwV4heCfcz-tgC_iyqQftb225_BBo1xCQYyziiS18WkNYjYuAFDkcbXAkmwHGMYzrmVcAKaHNSuqL8rMlQ8XPW0IiVpHgWWbrVbAz-2B.67UpkKc2pirZiJlGV806Bw"
+    }
+  }
+}
