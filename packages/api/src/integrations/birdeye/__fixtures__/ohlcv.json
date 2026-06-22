@@ -1,0 +1,42 @@
+{
+  "data": {
+    "items": [
+      {
+        "o": 0.000004618866595389793,
+        "h": 0.000004629967710803294,
+        "l": 0.000004606437497006688,
+        "c": 0.0000046141055155332185,
+        "v": 1291266269.5972111,
+        "unixTime": 1782117900,
+        "address": "DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263",
+        "type": "15m",
+        "currency": "usd"
+      },
+      {
+        "o": 0.0000046141055155332185,
+        "h": 0.000004639645257419168,
+        "l": 0.000004612479400674639,
+        "c": 0.000004623843794791375,
+        "v": 6211276662.6706705,
+        "unixTime": 1782118800,
+        "address": "DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263",
+        "type": "15m",
+        "currency": "usd"
+      },
+      {
+        "o": 0.000004623843794791375,
+        "h": 0.000004623843794791375,
+        "l": 0.000004609117803541482,
+        "c": 0.000004614391733318819,
+        "v": 3279455474.106089,
+        "unixTime": 1782119700,
+        "address": "DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263",
+        "type": "15m",
+        "currency": "usd"
+      }
+    ],
+    "isScaledUiToken": false,
+    "multiplier": null
+  },
+  "success": true
+}

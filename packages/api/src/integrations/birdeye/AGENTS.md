@@ -9,14 +9,16 @@
 
 ## Surface
 
+Every method takes a single **destructured object** arg.
+
 | Method | Returns | Used by |
 |--------|---------|---------|
 | `trending({ sort, limit, offset })` | `TokenSummary[]` | `tokens.trending`, banners |
-| `token(address)` | `TokenDetail` | `tokens.get` |
-| `ohlcv(address, interval, { from, to })` | `Candle[]` | `chart.candles` |
-| `holders(address, limit)` | `Holder[]` | `holders.list` |
-| `trades(address, limit)` | `Trade[]` | `trades.recent` |
-| `prices(addresses[])` | `Record<address, number>` | `portfolio` |
+| `token({ address })` | `TokenDetail \| null` | `tokens.get` |
+| `ohlcv({ address, interval, from, to })` | `Candle[]` | `chart.candles` |
+| `holders({ address, limit })` | `Holder[]` | `holders.list` |
+| `trades({ address, limit })` | `Trade[]` | `trades.recent` |
+| `prices({ addresses })` | `Record<address, number>` | `portfolio` |
 
 Each method validates the upstream payload with Zod and returns typed data or throws a tagged error.
 
@@ -32,7 +34,11 @@ Each method validates the upstream payload with Zod and returns typed data or th
 ## Testing
 
 - Router tests **mock this client** (`vi.mock` or inject a fake) — assert the router's mapping/shape.
-- The client's own parsing/caching/limiter logic gets a unit test with a stubbed `fetch`.
+- Each `methods/<name>.test.ts` asserts normalization against a real payload in `__fixtures__/`
+  (stubbed `fetch`, offline). `cache`/`limiter`/`request` have their own unit tests (error mapping +
+  key-safety live in `request.test.ts`). Helpers in `test-helpers.ts`.
+- **Fixtures are REAL** — every `__fixtures__/*.json` is captured from the live BirdEye API, so the
+  per-method schemas are pinned to real field names (re-capture if BirdEye changes its shape).
 - A real-key `birdeye.smoke.ts` (opt-in, not in the normal run) verifies the live contract out-of-band.
 
 ## Implementation (M1.2)
@@ -48,8 +54,7 @@ serverless both are per-instance regardless (reset on cold start, no cross-insta
 a dep buys little; a shared Upstash/Redis limit is the only true fleet-wide control and is out of M12
 scope. Add it if/when a fleet-wide limit is needed.
 
-**Endpoints + per-method cache TTL** (exact response field names confirmed by `birdeye.smoke.ts`
-against the live API — the docs hide the schema):
+**Endpoints + per-method cache TTL** (response shapes captured from the live API into `__fixtures__/`):
 
 | Method | `GET` path | TTL |
 |--------|-----------|-----|
@@ -57,14 +62,27 @@ against the live API — the docs hide the schema):
 | `token` | `/defi/token_overview?address=` (null/`success:false` → `null` → router `NOT_FOUND`) | 30s |
 | `ohlcv` | `/defi/ohlcv?address=&type=&time_from=&time_to=` | 300s (ranges immutable) |
 | `holders` | `/defi/v3/token/holder?address=&offset=0&limit=` | 30s |
-| `trades` | `/defi/txs/token?address=&offset=0&limit=&tx_type=swap&sort_type=desc` | 5s |
-| `prices` | `/defi/multi_price?list_address=` | 5s |
+| `trades` | `/defi/txs/token?…&tx_type=swap&sort_type=desc` — USD from `basePrice`, amount from `base.uiAmount` (no flat `volumeUSD`) | 5s |
+| `prices` | `/defi/price?address=` **per address**, cached per token (the `/defi/multi_price` batch endpoint is plan-gated → 401) | 5s |
 
 Read paths cache-first (a hit takes no rate-limit token). `429` → `RateLimitError`; any other non-2xx,
 transport failure, invalid JSON, `success:false`, or Zod-parse failure → `UpstreamError` (messages
-carry no key). Raw upstream fields are Zod-validated in `schema.ts`, then normalized to the view types
-(`TokenSummary` / `TokenDetail` / `Candle` / `Holder` / `Trade`) which live there until a 2nd router
-needs them.
+carry no key).
+
+**File layout — one function per file (feature-colocated).**
+
+| File | Owns |
+|------|------|
+| `index.ts` | `createBirdEyeClient(opts)` (assembles the context, wires every method) + the `birdeye` singleton; re-exports the view types + errors (the public surface). |
+| `context.ts` | `createContext(opts) → { request, cache }` + `BirdEyeClientOptions` — builds the limiter, requester, and cache **once** (one cache, one limiter shared by all methods). |
+| `request.ts` | the shared transport: rate-limit → `fetch` (key header) → status/JSON/envelope error mapping. |
+| `cache.ts` · `limiter.ts` · `errors.ts` · `parse.ts` | bounded TTL cache · token-bucket limiter · `RateLimitError`/`UpstreamError` · `parseData` (Zod-fail → `UpstreamError`). |
+| `schema.ts` | **shared** view types (`TokenSummary`/`TokenDetail`/`Candle`/`Holder`/`Trade`) + `Envelope` + `TrendingSort`. Promote to `src/schemas/token.ts` once a 2nd module needs them. |
+| `methods/<name>.ts` | one method each — `makeX(ctx)` factory + its raw upstream schema + normalizer + TTL colocated. |
+| `__fixtures__/*.json` | real BirdEye payloads the method tests assert against. |
+
+Each `methods/<name>.ts` Zod-validates its endpoint's raw payload and normalizes to the shared view
+type; `index.ts` never re-derives shapes.
 
 ## Links
 

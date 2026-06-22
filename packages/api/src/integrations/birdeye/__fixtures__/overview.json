@@ -1,0 +1,27 @@
+{
+  "data": {
+    "address": "DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263",
+    "decimals": 5,
+    "symbol": "Bonk",
+    "name": "Bonk",
+    "marketCap": 385760753.48752034,
+    "fdv": 406714657.9970142,
+    "extensions": {
+      "description": "The Official Bonk Inu token",
+      "twitter": "https://twitter.com/bonk_inu",
+      "website": "https://www.bonkcoin.com/",
+      "discord": "https://discord.gg/ubqvDDFUhf",
+      "coingeckoId": "bonk"
+    },
+    "logoURI": "https://arweave.net/hQiPZOsRZXGXBJd_82PhVdlM_hACsT_q6wqwf5cSY7I",
+    "liquidity": 2784490.269094329,
+    "price": 0.000004622034887524746,
+    "priceChange24hPercent": 0.5323084820041045,
+    "totalSupply": 87994718320878.69,
+    "circulatingSupply": 83461237934123.02,
+    "holder": 999275,
+    "v24hUSD": 673226.2788501986,
+    "numberMarkets": 300
+  },
+  "success": true
+}

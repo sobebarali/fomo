@@ -45,22 +45,24 @@ async function main(): Promise<void> {
     "trending item has priceUsd"
   );
 
-  const detail = await client.token(BONK);
+  const detail = await client.token({ address: BONK });
   assert.ok(detail, "token detail present for a known mint");
 
-  const candles = await client.ohlcv(BONK, "15m", {
+  const candles = await client.ohlcv({
+    address: BONK,
+    interval: "15m",
     from: nowSec - 3600,
     to: nowSec,
   });
   assert.ok(Array.isArray(candles), "ohlcv is an array");
 
-  const holders = await client.holders(BONK, 10);
+  const holders = await client.holders({ address: BONK, limit: 10 });
   assert.ok(Array.isArray(holders), "holders is an array");
 
-  const trades = await client.trades(BONK, 10);
+  const trades = await client.trades({ address: BONK, limit: 10 });
   assert.ok(Array.isArray(trades), "trades is an array");
 
-  const prices = await client.prices([SOL]);
+  const prices = await client.prices({ addresses: [SOL] });
   assert.equal(typeof prices[SOL], "number", "prices map has a SOL price");
 
   process.stdout.write("birdeye smoke ok\n");

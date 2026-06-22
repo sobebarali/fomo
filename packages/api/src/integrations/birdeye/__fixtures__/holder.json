@@ -1,0 +1,37 @@
+{
+  "data": {
+    "items": [
+      {
+        "amount": "699666605122337574",
+        "decimals": 5,
+        "mint": "DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263",
+        "owner": "9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM",
+        "token_account": "5hpfC9VBxVcoW9opCnM2PqR6YWRLBzrBpabJTZnwwNiw",
+        "ui_amount": 6996666051223.375,
+        "is_scaled_ui_token": false,
+        "multiplier": null
+      },
+      {
+        "amount": "471204766940904418",
+        "decimals": 5,
+        "mint": "DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263",
+        "owner": "51yZyDSnec4xnUv7XLRVYcDyV4x3wUtzrDcRaYbmQU5j",
+        "token_account": "2vPvEovB1gw8bAUqasThEv6YMAdJ77AU3RxiUNqknEiw",
+        "ui_amount": 4712047669409.045,
+        "is_scaled_ui_token": false,
+        "multiplier": null
+      },
+      {
+        "amount": "442610445030596633",
+        "decimals": 5,
+        "mint": "DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263",
+        "owner": "AGkGWK1R669KDT4FCqgDgK7PgahGJPjD4J9xmVjuL9kn",
+        "token_account": "F8FqZuUKfoy58aHLW6bfeEhfW9sTtJyqFTqnxVmGZ6dU",
+        "ui_amount": 4426104450305.966,
+        "is_scaled_ui_token": false,
+        "multiplier": null
+      }
+    ]
+  },
+  "success": true
+}

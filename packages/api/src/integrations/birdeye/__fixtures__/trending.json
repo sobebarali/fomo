@@ -1,0 +1,44 @@
+{
+  "data": {
+    "updateUnixTime": 1782124210,
+    "updateTime": "2026-06-22T10:30:10",
+    "tokens": [
+      {
+        "address": "8hS74HdH6d6UTnnE7Vv25mJgboPeoxmM8S6DkW4Crise",
+        "decimals": 9,
+        "fdv": 0,
+        "liquidity": 3.072266335777381,
+        "logoURI": "https://ipfs.io/ipfs/QmRV6TYJebN4cxHLLpkjTUVJ29cocPbCPPNPYat8GSUewY",
+        "marketcap": 0,
+        "name": "RisePFT",
+        "price": null,
+        "rank": 1,
+        "symbol": "RISEPFT",
+        "volume24hUSD": 0.08441531734235487,
+        "volume24hChangePercent": null,
+        "price24hChangePercent": null,
+        "isScaledUiToken": false,
+        "multiplier": null
+      },
+      {
+        "address": "FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump",
+        "decimals": 6,
+        "fdv": 4454484.85591538,
+        "liquidity": 618320.6200703267,
+        "logoURI": "https://ipfs.io/ipfs/bafybeihe22b5sxr3ihnxt7pregfieyteqvubqhik3j3y4bbx243xlqjw3q",
+        "marketcap": 4454484.85591538,
+        "name": "three.ws",
+        "price": 0.004454815540754624,
+        "rank": 2,
+        "symbol": "three",
+        "volume24hUSD": 1330930.3906461413,
+        "volume24hChangePercent": 91.5867155470421,
+        "price24hChangePercent": 24.79562932531912,
+        "isScaledUiToken": false,
+        "multiplier": null
+      }
+    ],
+    "total": 4622
+  },
+  "success": true
+}
