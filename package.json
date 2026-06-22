@@ -19,6 +19,7 @@
       "@orpc/server": "^1.13.14",
       "@orpc/client": "^1.13.14",
       "@privy-io/node": "^0.22.0",
+      "@privy-io/react-auth": "^3.32.1",
       "@orpc/openapi": "^1.13.14",
       "@orpc/zod": "^1.13.14",
       "@types/react": "^19.2.15",

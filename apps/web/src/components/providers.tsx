@@ -1,6 +1,8 @@
 "use client";
 
+import { env } from "@fomo/env/web";
 import { Toaster } from "@fomo/ui/components/sonner";
+import { PrivyProvider } from "@privy-io/react-auth";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 
@@ -16,10 +18,20 @@ export default function Providers({ children }: { children: React.ReactNode }) {
       disableTransitionOnChange
       enableSystem
     >
-      <QueryClientProvider client={queryClient}>
-        {children}
-        <ReactQueryDevtools />
-      </QueryClientProvider>
+      <PrivyProvider
+        appId={env.NEXT_PUBLIC_PRIVY_APP_ID}
+        config={{
+          loginMethods: ["email", "apple", "google"],
+          embeddedWallets: {
+            solana: { createOnLogin: "users-without-wallets" },
+          },
+        }}
+      >
+        <QueryClientProvider client={queryClient}>
+          {children}
+          <ReactQueryDevtools />
+        </QueryClientProvider>
+      </PrivyProvider>
       <Toaster richColors />
     </ThemeProvider>
   );

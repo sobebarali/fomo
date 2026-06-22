@@ -17,6 +17,7 @@
     "@orpc/server": "catalog:",
     "@orpc/tanstack-query": "^1.13.14",
     "@orpc/zod": "catalog:",
+    "@privy-io/react-auth": "catalog:",
     "@tanstack/react-query": "^5.90.12",
     "babel-plugin-react-compiler": "^1.0.0",
     "dotenv": "catalog:",
