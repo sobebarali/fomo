@@ -15,6 +15,13 @@
   navigations; the sidebar is a client island that highlights the active row via `usePathname`).
   `[address]/page.tsx` renders only the middle + right content for the current token. So clicking a
   token re-renders just that slot (with `loading.tsx` as its fallback), not the whole app.
+- **Warm cache:** the layout mounts `TokenWarmer` (client island) which pre-loads every trending
+  token's four page reads (`tokens.get`/`chart.candles`/`holders.list`/`trades.recent`, matching the
+  page's calls) into the server's stale-while-revalidate cache, then re-warms on a loop. A warm token
+  renders from cache (no rate-limit token) so switching to it is instant. **Ceiling:** BirdEye free
+  tier ≈ 1 req/s, so a full warm pass over ~30 tokens takes ~2 min — first clicks during the initial
+  warm-up still hit cold. Raising it needs a paid BirdEye RPS or streaming chart/holders/trades as
+  client islands so navigation only blocks on `tokens.get`.
 - **Mobile:** sticky token header with back/share/watch actions, chart + functional
   `LIVE/1D/1W/1M/1Y/MAX` range tabs (`1D` default), compact stats, `Trades`/`Holders`/`About` tabs,
   position card, swap panel, and sticky `Sell` / `Buy {SYMBOL}` actions.

@@ -8,7 +8,7 @@
 
 | File | Owns |
 |------|------|
-| `cache.ts` | `createCache(max) → Cache` — bounded read-through TTL cache (FIFO-evict at `max`); a hit takes no rate-limit token. |
+| `cache.ts` | `createCache(max) → Cache` — bounded **stale-while-revalidate** TTL cache (FIFO-evict at `max`): a fresh hit returns instantly, a stale hit returns the old value AND refreshes in the background (caller never blocks on a refetch), a cold miss blocks once; concurrent producers per key are deduped; a hit takes no rate-limit token. |
 | `limiter.ts` | `createLimiter(rps) → Limiter` — in-memory token bucket; per-instance (adequate for Vercel serverless). |
 | `errors.ts` | `RateLimitError` (→ `RATE_LIMITED`) · `UpstreamError` (→ `UPSTREAM_ERROR`) · `BadRequestError` (→ `BAD_REQUEST`; its message **is** surfaced to the user — for a request the upstream rejects as unfulfillable, e.g. "Insufficient funds"). **Never carry an API key**. |
 | `parse.ts` | `parseData(schema, data)` — Zod `safeParse`; a failure becomes `UpstreamError`. |

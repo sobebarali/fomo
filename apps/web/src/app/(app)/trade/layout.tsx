@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 
 import { TokenBanner } from "@/components/banners/token-banner";
 import { FloatingAlert, TradeTopBar } from "./_components/server-panels";
+import { TokenWarmer } from "./_components/token-warmer";
 import { TrendingSidebar } from "./_components/trending-sidebar";
 import type {
   Loadable,
@@ -58,6 +59,7 @@ export default async function TradeLayout({
 
   return (
     <main className="dark min-h-svh bg-[#0b0f10] text-[#f2fff7]">
+      <TokenWarmer addresses={bannerTokens.map((token) => token.address)} />
       <div className="hidden lg:block">
         <TokenBanner tokens={bannerTokens} />
       </div>
