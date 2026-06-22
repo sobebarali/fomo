@@ -14,6 +14,7 @@ export default defineVitestConfig({
       ALCHEMY_RPC_URL: "http://localhost",
       JUPITER_API_KEY: "test",
       PRIVY_APP_SECRET: "test",
+      NEXT_PUBLIC_PRIVY_APP_ID: "test",
     },
   },
 });

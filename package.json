@@ -18,6 +18,7 @@
       "sonner": "^2.0.5",
       "@orpc/server": "^1.13.14",
       "@orpc/client": "^1.13.14",
+      "@privy-io/node": "^0.22.0",
       "@orpc/openapi": "^1.13.14",
       "@orpc/zod": "^1.13.14",
       "@types/react": "^19.2.15",

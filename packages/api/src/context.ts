@@ -1,6 +1,8 @@
 import type { Db } from "@fomo/db";
 import type { NextRequest } from "next/server";
 
+import { privy } from "./integrations/privy";
+
 export interface CreateContextOptions {
   /**
    * The DB handle for this request. The route handler injects the real Postgres `db`;
@@ -9,14 +11,13 @@ export interface CreateContextOptions {
   db: Db;
 }
 
-// biome-ignore lint/suspicious/useAwait: async context factory — Privy token verification (await) lands here.
 export async function createContext(
-  _req: NextRequest,
+  req: NextRequest,
   { db }: CreateContextOptions
 ) {
   return {
     db,
-    auth: null,
+    auth: await privy.verifyToken(req),
     session: null,
   };
 }
