@@ -7,8 +7,8 @@
 
 | Export | Owns |
 |--------|------|
-| `@fomo/env/server` | Server-only env. Today: `DATABASE_URL`, `CORS_ORIGIN`, `NODE_ENV`. To add (when their feature lands): `BIRDEYE_API_KEY`, `ALCHEMY_RPC_URL`, `JUPITER_*`, `PRIVY_APP_SECRET`. |
-| `@fomo/env/web` | Client-safe, `NEXT_PUBLIC_*` only. To add: `NEXT_PUBLIC_PRIVY_APP_ID`. |
+| `@fomo/env/server` | Server-only env: `DATABASE_URL`, `CORS_ORIGIN`, `NODE_ENV`, `BIRDEYE_API_KEY`, `ALCHEMY_RPC_URL`, `JUPITER_API_KEY`, `PRIVY_APP_SECRET`. |
+| `@fomo/env/web` | Client-safe, `NEXT_PUBLIC_*` only: `NEXT_PUBLIC_PRIVY_APP_ID`. |
 
 ## Conventions (Rule → Why)
 

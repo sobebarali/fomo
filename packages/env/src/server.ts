@@ -9,6 +9,10 @@ export const env = createEnv({
     NODE_ENV: z
       .enum(["development", "production", "test"])
       .default("development"),
+    BIRDEYE_API_KEY: z.string().min(1),
+    ALCHEMY_RPC_URL: z.url(),
+    JUPITER_API_KEY: z.string().min(1),
+    PRIVY_APP_SECRET: z.string().min(1),
   },
   runtimeEnv: process.env,
   skipValidation: !!process.env.SKIP_ENV_VALIDATION,
