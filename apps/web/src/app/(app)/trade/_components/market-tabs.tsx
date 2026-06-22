@@ -45,7 +45,6 @@ export function MarketTabs({
     queryKey: ["trades", address],
     refetchInterval: active === "trades" && pollLiveTrades ? 15_000 : false,
     refetchOnMount: false,
-    retry: false,
     staleTime: 15_000,
   });
 

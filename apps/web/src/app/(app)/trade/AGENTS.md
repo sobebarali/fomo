@@ -38,6 +38,7 @@
 | CET-229 ships the `lightweight-charts` area island (`price-chart.tsx`) with functional `LIVE/1D/1W/1M/1Y/MAX` tabs fed by `chart.candles`; `ChartPanel` (RSC) just mounts it with the server seed. | Real chart on the Penpot design; the canvas + tab interactivity must be a client island. |
 | The swap flow uses base-unit string amounts, default `50` bps slippage, quote before build, confirmation before Privy signing/sending. | Preserves Jupiter amount integrity and user consent; the server never signs. |
 | Position P/L remains neutral when cost basis is unknown (`null` from `portfolio.position`). | Real-data rule: no fabricated cost basis or P/L. |
+| `RATE_LIMITED` (BirdEye/Alchemy/Jupiter 429) auto-recovers: client islands retry with capped backoff (global `retry` in `utils/orpc.ts`, no toast); server-rendered panels are nudged by the `RateLimitRefresher` island (`router.refresh()` every 8s while any panel is rate-limited). `loading.tsx` covers the server await for both `/trade` and `/trade/[address]`. | Free-tier limits are transient; the UI fills in once they clear instead of dead-ending. |
 
 ## Decisions
 

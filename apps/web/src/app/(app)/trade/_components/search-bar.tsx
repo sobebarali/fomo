@@ -23,7 +23,6 @@ export function SearchBar() {
     enabled: open,
     queryFn: () => client.tokens.trending({ limit: 50, sort: "trending" }),
     queryKey: ["search-trending"],
-    retry: false,
     staleTime: 60_000,
   });
 

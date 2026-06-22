@@ -7,6 +7,7 @@ import {
 import { client } from "@/utils/orpc";
 import { MarketTabs } from "../_components/market-tabs";
 import { PositionCard } from "../_components/position-card";
+import { RateLimitRefresher } from "../_components/rate-limit-refresher";
 import {
   ChartPanel,
   FloatingAlert,
@@ -102,6 +103,15 @@ export default async function TradePage({ params }: TradePageProps) {
   const tradeRows: Trade[] = trades.data?.items ?? [];
   const chartError = chart.error;
   const holdersError = holders.error;
+  // Any rate-limited panel → poll the server until it clears (the client islands self-retry; the
+  // purely server-rendered panels need this nudge).
+  const rateLimited = [
+    trending.error,
+    tokenResult.error,
+    chart.error,
+    holders.error,
+    trades.error,
+  ].includes("RATE_LIMITED");
 
   return (
     <main className="dark min-h-svh bg-[#0b0f10] text-[#f2fff7]">
@@ -111,6 +121,7 @@ export default async function TradePage({ params }: TradePageProps) {
       <TradeTopBar />
       <MobileTokenHeader token={token} />
       <FloatingAlert />
+      {rateLimited ? <RateLimitRefresher /> : null}
       <div className="grid lg:h-[calc(100svh-137px)] lg:grid-cols-[320px_minmax(0,1fr)_360px]">
         <TrendingSidebar
           activeAddress={address}

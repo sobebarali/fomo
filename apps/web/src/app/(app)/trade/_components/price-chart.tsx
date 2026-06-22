@@ -72,7 +72,6 @@ export function PriceChart({
     queryKey: ["chart-candles", address, range],
     refetchInterval: ready && config.pollMs ? config.pollMs : false,
     refetchOnMount: false,
-    retry: false,
     staleTime: config.pollMs ?? 30_000,
   });
 
