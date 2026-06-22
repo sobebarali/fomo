@@ -4,11 +4,11 @@ import {
   ArrowLeft,
   Bell,
   ChevronDown,
-  Search,
   Share2,
   Star,
   Wallet,
 } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 
 import { AuthButton } from "@/components/auth-button";
@@ -21,6 +21,7 @@ import {
   formatUsd,
 } from "./format";
 import { PriceChart } from "./price-chart";
+import { SearchBar } from "./search-bar";
 import { TokenLogo } from "./token-logo";
 import type { Candle, Loadable, TokenDetail, TokenSummary } from "./types";
 
@@ -28,15 +29,18 @@ export function TradeTopBar() {
   return (
     <header className="hidden h-14 items-center justify-between border-white/10 border-b bg-[#0b0f10] px-4 text-xs lg:flex">
       <Link className="flex items-center gap-2 font-semibold" href="/">
-        <span className="flex size-8 items-center justify-center bg-[#16e27b]">
-          <span className="font-black text-[#07100b]">C</span>
+        <span className="flex size-8 items-center justify-center rounded-xl bg-[#16e27b] p-1">
+          <Image
+            alt="ChadWallet"
+            className="h-full w-full object-contain"
+            height={32}
+            src="/logo-black.png"
+            width={32}
+          />
         </span>
         ChadWallet
       </Link>
-      <div className="flex h-8 w-[34rem] items-center gap-2 border border-white/10 bg-[#101617] px-3 text-[#7d8b86]">
-        <Search data-icon="inline-start" />
-        <span>Search token, symbol, or mint</span>
-      </div>
+      <SearchBar />
       <div className="flex items-center gap-2">
         <div className="flex h-8 items-center gap-2 border border-white/10 bg-[#101617] px-3 text-[#dce5df]">
           <Wallet data-icon="inline-start" />

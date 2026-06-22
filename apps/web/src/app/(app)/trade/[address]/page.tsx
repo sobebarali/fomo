@@ -102,7 +102,6 @@ export default async function TradePage({ params }: TradePageProps) {
   const tradeRows: Trade[] = trades.data?.items ?? [];
   const chartError = chart.error;
   const holdersError = holders.error;
-  const tradesError = trades.error;
 
   return (
     <main className="dark min-h-svh bg-[#0b0f10] text-[#f2fff7]">
@@ -134,7 +133,6 @@ export default async function TradePage({ params }: TradePageProps) {
               holders={holderRows}
               holdersError={holdersError}
               initialTrades={tradeRows}
-              initialTradesError={tradesError}
               token={token}
               variant="desktop"
             />
@@ -145,7 +143,6 @@ export default async function TradePage({ params }: TradePageProps) {
               holders={holderRows}
               holdersError={holdersError}
               initialTrades={tradeRows}
-              initialTradesError={tradesError}
               token={token}
               variant="mobile"
             />

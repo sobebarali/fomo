@@ -20,7 +20,6 @@ export function MarketTabs({
   address,
   holdersError,
   holders,
-  initialTradesError,
   initialTrades,
   token,
   variant = "desktop",
@@ -28,7 +27,6 @@ export function MarketTabs({
   address: string;
   holdersError: string | null;
   holders: Holder[];
-  initialTradesError: string | null;
   initialTrades: Trade[];
   token: TokenDetail | null;
   variant?: "desktop" | "mobile";
@@ -86,7 +84,7 @@ export function MarketTabs({
       <div className="min-h-[18rem]">
         {active === "trades" ? (
           <TradesTable
-            isError={trades.isError || Boolean(initialTradesError)}
+            isError={trades.isError}
             isFetching={trades.isFetching}
             trades={trades.data.items}
           />
