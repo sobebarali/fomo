@@ -253,7 +253,7 @@ it("returns a held token position with unknown cost basis as null P/L", async ()
   });
 });
 
-it("returns NOT_FOUND when the wallet has no positive balance for the token", async () => {
+it("returns null when the wallet has no positive balance for the token", async () => {
   mockGetTokenBalances.mockResolvedValue([
     tokenBalance(BONK, 0),
     tokenBalance(WIF, 1),
@@ -265,7 +265,7 @@ it("returns NOT_FOUND when the wallet has no positive balance for the token", as
       { address: BONK },
       { context: testContext(db, session) }
     )
-  ).rejects.toMatchObject({ code: "NOT_FOUND" });
+  ).resolves.toBeNull();
 
   expect(mockToken).not.toHaveBeenCalled();
 });

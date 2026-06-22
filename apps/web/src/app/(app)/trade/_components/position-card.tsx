@@ -7,7 +7,9 @@ import { useQuery } from "@tanstack/react-query";
 import { client } from "@/utils/orpc";
 import { formatTokenAmount, formatUsd } from "./format";
 
-type Position = Awaited<ReturnType<typeof client.portfolio.position>>;
+type Position = NonNullable<
+  Awaited<ReturnType<typeof client.portfolio.position>>
+>;
 
 export function PositionCard({ address }: { address: string }) {
   const { authenticated, ready } = usePrivy();

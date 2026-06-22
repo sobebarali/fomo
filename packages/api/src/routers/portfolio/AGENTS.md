@@ -17,8 +17,8 @@
 ### `position` — the user's position in one token
 - **Access:** protected
 - **Input:** `z.object({ address: SolanaMint })`
-- **Output:** `{ address: string; amount: number; valueUsd: number; avgBuyUsd: number | null; pnlUsd: number | null; pnlPct: number | null }`
-- **Errors:** `UNAUTHORIZED` · `BAD_REQUEST` (invalid mint) · `NOT_FOUND` (no position) · `RATE_LIMITED` · `UPSTREAM_ERROR`.
+- **Output:** `{ address: string; amount: number; valueUsd: number; avgBuyUsd: number | null; pnlUsd: number | null; pnlPct: number | null } | null` — **`null` when the wallet holds no position** (a normal state, not an error; the UI renders an empty position card).
+- **Errors:** `UNAUTHORIZED` · `BAD_REQUEST` (invalid mint) · `RATE_LIMITED` · `UPSTREAM_ERROR`.
 - **Side effects:** none.
 
 ## Conventions (Rule → Why)

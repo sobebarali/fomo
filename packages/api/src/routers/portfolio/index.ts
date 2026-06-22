@@ -72,7 +72,6 @@ const balances = protectedProcedure
 const position = protectedProcedure
   .errors({
     BAD_REQUEST: {},
-    NOT_FOUND: {},
     RATE_LIMITED: {},
     UNAUTHORIZED: {},
     UPSTREAM_ERROR: {},
@@ -92,7 +91,9 @@ const position = protectedProcedure
         (token) => token.address === input.address && token.amount > 0
       );
       if (!held) {
-        throw new ORPCError("NOT_FOUND");
+        // No holding is a normal state, not a 404 — return null so the UI shows
+        // an empty position without surfacing an error toast on every token view.
+        return null;
       }
 
       const detail = await birdeye.token({ address: input.address });

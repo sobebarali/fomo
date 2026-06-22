@@ -20,11 +20,14 @@ export const balancesOutput = z.object({
   totalValueUsd: z.number(),
 });
 
-export const positionOutput = z.object({
-  address: z.string(),
-  amount: z.number(),
-  valueUsd: z.number(),
-  avgBuyUsd: z.number().nullable(),
-  pnlUsd: z.number().nullable(),
-  pnlPct: z.number().nullable(),
-});
+// `null` = the wallet holds no position in this token (a normal state, not an error).
+export const positionOutput = z
+  .object({
+    address: z.string(),
+    amount: z.number(),
+    valueUsd: z.number(),
+    avgBuyUsd: z.number().nullable(),
+    pnlUsd: z.number().nullable(),
+    pnlPct: z.number().nullable(),
+  })
+  .nullable();
