@@ -77,6 +77,9 @@ is a symlink to it (one file, read by Claude Code / opencode / Codex alike). Col
 15. **Plan non-trivial work first** — anything touching >2 files, the data model, or a public API surface.
 16. **Record decisions in the module's `AGENTS.md`** — vetted dependency/approach choices and the
     rejected alternatives (Rules 5–6), so the "why" lives where the code lives.
+17. **Close the loop in Linear.** After completing a task tied to a Linear ticket (e.g. `CET-220`),
+    update the ticket before the work is considered done — move it to the right status and add a short
+    result comment (what shipped + how it was verified). Doc-in-lockstep (Rule 12) extends to the tracker.
 
 ## Domain hard rules (never violated)
 
