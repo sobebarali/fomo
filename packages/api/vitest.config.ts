@@ -10,6 +10,10 @@ export default defineVitestConfig({
       NODE_ENV: "test",
       DATABASE_URL: "postgresql://test:test@localhost:5432/test",
       CORS_ORIGIN: "http://localhost:3001",
+      BIRDEYE_API_KEY: "test",
+      ALCHEMY_RPC_URL: "http://localhost",
+      JUPITER_API_KEY: "test",
+      PRIVY_APP_SECRET: "test",
     },
   },
 });

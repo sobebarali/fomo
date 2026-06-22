@@ -35,6 +35,37 @@ Each method validates the upstream payload with Zod and returns typed data or th
 - The client's own parsing/caching/limiter logic gets a unit test with a stubbed `fetch`.
 - A real-key `birdeye.smoke.ts` (opt-in, not in the normal run) verifies the live contract out-of-band.
 
+## Implementation (M1.2)
+
+`createBirdEyeClient(options?)` → the client; `birdeye` is the shared singleton routers import (one
+cache, one limiter, key from `@fomo/env/server`). Options (all optional): `fetch` (default global —
+the test seam), `apiKey` (default `env.BIRDEYE_API_KEY`), `baseUrl`, `requestsPerSecond` (default 10),
+`cacheMax` (default 500). Exports `RateLimitError` / `UpstreamError` for routers to `instanceof`-map.
+
+**Cache + limiter — decision (Rule 16):** hand-rolled, **zero new deps** — a bounded-TTL `Map`
+(FIFO-evict at `cacheMax`) + a token-bucket limiter. Rejected `lru-cache` / `p-throttle`: on Vercel
+serverless both are per-instance regardless (reset on cold start, no cross-instance coordination), so
+a dep buys little; a shared Upstash/Redis limit is the only true fleet-wide control and is out of M12
+scope. Add it if/when a fleet-wide limit is needed.
+
+**Endpoints + per-method cache TTL** (exact response field names confirmed by `birdeye.smoke.ts`
+against the live API — the docs hide the schema):
+
+| Method | `GET` path | TTL |
+|--------|-----------|-----|
+| `trending` | `/defi/token_trending` (`sort_by`/`sort_type` from `sort`) | 15s |
+| `token` | `/defi/token_overview?address=` (null/`success:false` → `null` → router `NOT_FOUND`) | 30s |
+| `ohlcv` | `/defi/ohlcv?address=&type=&time_from=&time_to=` | 300s (ranges immutable) |
+| `holders` | `/defi/v3/token/holder?address=&offset=0&limit=` | 30s |
+| `trades` | `/defi/txs/token?address=&offset=0&limit=&tx_type=swap&sort_type=desc` | 5s |
+| `prices` | `/defi/multi_price?list_address=` | 5s |
+
+Read paths cache-first (a hit takes no rate-limit token). `429` → `RateLimitError`; any other non-2xx,
+transport failure, invalid JSON, `success:false`, or Zod-parse failure → `UpstreamError` (messages
+carry no key). Raw upstream fields are Zod-validated in `schema.ts`, then normalized to the view types
+(`TokenSummary` / `TokenDetail` / `Candle` / `Holder` / `Trade`) which live there until a 2nd router
+needs them.
+
 ## Links
 
 Tokens: [`../../routers/tokens/AGENTS.md`](../../routers/tokens/AGENTS.md) · Env: [`../../../../env/AGENTS.md`](../../../../env/AGENTS.md) · API: [`../../../AGENTS.md`](../../../AGENTS.md)
