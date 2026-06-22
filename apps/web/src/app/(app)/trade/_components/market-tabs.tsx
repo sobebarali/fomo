@@ -46,6 +46,7 @@ export function MarketTabs({
     enabled: active === "holders" && mounted,
     queryFn: () => client.holders.list({ address, limit: 20 }),
     queryKey: ["holders", address],
+    refetchInterval: active === "holders" && mounted ? 30_000 : false,
     staleTime: 30_000,
   });
 

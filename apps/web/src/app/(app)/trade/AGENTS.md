@@ -34,14 +34,20 @@
 
 ## Data + boundaries
 
+> **Live-everywhere pattern:** every data surface is a client island that seeds from a server/cached
+> value for an instant first paint, then **polls** so values update in place — `refetchInterval` gated
+> on a post-mount flag (avoids hydration mismatch), poll periods aligned to cache TTLs so most polls
+> hit the warm SWR cache (free). Shared `queryKey`s dedupe (e.g. sidebar + both banners share
+> `["trending-sidebar"]` → one poll).
+
 | Concern | Source | Boundary |
 |---------|--------|----------|
-| Trending list | `tokens.trending` | Server Component in `layout.tsx` (cached) |
-| Token header / stats | `tokens.get` | Server Component — **the only read `[address]/page.tsx` blocks on**, so navigation is fast |
-| Chart render + range-tab refetch | `chart.candles` | client island (`lightweight-charts` area series); self-fetches per range with a skeleton, polls `LIVE` |
-| Holders + live trades + tab state | `holders.list` / `trades.recent` | client islands; fetch on tab activation with a skeleton (no server seed), trades poll after hydration |
+| Trending list + top/bottom banners | `tokens.trending` | server-seeded in `layout.tsx`; `TrendingSidebar` + `LiveTokenBanner` poll the shared `["trending-sidebar"]` key (30s) |
+| Token header / stats | `tokens.get` | **the only read `[address]/page.tsx` blocks on** (fast nav); `token-live.tsx` wrappers seed from it and poll the shared `["token", address]` key (10s) |
+| Chart render + range-tab refetch | `chart.candles` | client island (`lightweight-charts` area series); self-fetches per range with a skeleton, polls `LIVE` 15s / `1D` 20s |
+| Holders + live trades + tab state | `holders.list` / `trades.recent` | client islands; fetch on tab activation with a skeleton (no server seed), both poll 30s/15s |
+| Position | `portfolio.position` | protected client island; polls 15s after Privy auth |
 | Buy/sell quote + build/sign/send | `swap.quote` → `swap.buildTransaction` → Privy Solana wallet | client island; quote first, confirm before signing |
-| Position | `portfolio.position` | protected client island; fetches only after Privy auth |
 
 ## Conventions (Rule → Why)
 

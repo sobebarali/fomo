@@ -27,7 +27,7 @@ const RANGE_CONFIG: Record<
   { interval: Interval; lookbackSeconds?: number; pollMs?: number }
 > = {
   LIVE: { interval: "1m", lookbackSeconds: 10_800, pollMs: 15_000 },
-  "1D": { interval: "15m" },
+  "1D": { interval: "15m", pollMs: 20_000 },
   "1W": { interval: "1H", lookbackSeconds: 604_800 },
   "1M": { interval: "4H", lookbackSeconds: 2_592_000 },
   "1Y": { interval: "1D", lookbackSeconds: 31_536_000 },

@@ -4,13 +4,13 @@ import { client } from "@/utils/orpc";
 import { MarketTabs } from "../_components/market-tabs";
 import { PositionCard } from "../_components/position-card";
 import { RateLimitRefresher } from "../_components/rate-limit-refresher";
-import {
-  ChartPanel,
-  MobileStats,
-  MobileTokenHeader,
-  TokenHeaderPanel,
-} from "../_components/server-panels";
+import { ChartPanel } from "../_components/server-panels";
 import { MobileSwapBar, SwapPanel } from "../_components/swap-panel";
+import {
+  LiveMobileStats,
+  LiveMobileTokenHeader,
+  LiveTokenHeaderPanel,
+} from "../_components/token-live";
 import type {
   Loadable,
   MarketErrorCode,
@@ -83,14 +83,14 @@ export default async function TradePage({ params }: TradePageProps) {
   // switching tokens re-renders just these slots, not the whole app.
   return (
     <>
-      <MobileTokenHeader token={token} />
+      <LiveMobileTokenHeader address={address} initialToken={token} />
       {rateLimited ? <RateLimitRefresher /> : null}
       <section className="min-w-0 overflow-y-auto pb-40 lg:pb-0">
         <div className="hidden lg:block">
-          <TokenHeaderPanel token={token} />
+          <LiveTokenHeaderPanel address={address} initialToken={token} />
         </div>
         <ChartPanel address={address} />
-        <MobileStats token={token} />
+        <LiveMobileStats address={address} initialToken={token} />
         <div className="hidden lg:block">
           <MarketTabs address={address} token={token} variant="desktop" />
         </div>

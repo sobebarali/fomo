@@ -5,8 +5,10 @@
 
 ## Contract
 
-- **Props:** `{ tokens: TokenSummary[] }` (server-fetched from `tokens.trending` and passed in — the
-  banner does no fetching itself).
+- **Props:** `{ tokens: TokenSummary[] }` (passed in — the banner does no fetching itself). On the
+  trade route, `LiveTokenBanner` (`live-token-banner.tsx`) is the parent that supplies live data: it
+  seeds from the server result and polls the shared `["trending-sidebar"]` query (30s), keeping the
+  marquee presentational while its prices update in place.
 - **Behavior:** horizontal auto-scroll/marquee; each pill = logo · symbol · price · 24h % (green up /
   red down). Click/tap a pill → `router.push(\`/trade/\${address}\`)`.
 - **Placement:** two instances on the landing page (top + bottom); the bottom may render the list reversed.
