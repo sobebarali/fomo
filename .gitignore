@@ -52,3 +52,6 @@ coverage
 .cache
 tmp
 temp
+
+# Local MCP config — holds secrets, never commit
+.mcp.json
