@@ -10,7 +10,7 @@
 - **Access:** protected
 - **Input:** none
 - **Output:** `{ userId: string; privyId: string; email: string | null; walletAddress: string | null }`
-- **Errors:** `UNAUTHORIZED` (no/invalid Privy session).
+- **Errors:** `UNAUTHORIZED` (no/invalid Privy session) · `NOT_FOUND` (verified session but no `users` row yet — call `sync` first).
 - **Side effects:** none.
 
 ### `sync` — upsert the user after sign-in
