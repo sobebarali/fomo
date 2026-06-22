@@ -23,7 +23,7 @@ import {
 import { PriceChart } from "./price-chart";
 import { SearchBar } from "./search-bar";
 import { TokenLogo } from "./token-logo";
-import type { Candle, TokenDetail } from "./types";
+import type { TokenDetail } from "./types";
 
 export function TradeTopBar() {
   return (
@@ -168,18 +168,10 @@ export function TokenHeaderPanel({ token }: { token: TokenDetail | null }) {
   );
 }
 
-export function ChartPanel({
-  address,
-  candles,
-  error,
-}: {
-  address: string;
-  candles: Candle[];
-  error: string | null;
-}) {
+export function ChartPanel({ address }: { address: string }) {
   return (
     <section className="border-white/10 border-b bg-[#0b0f10] p-3 lg:p-4">
-      <PriceChart address={address} candles={candles} error={error} />
+      <PriceChart address={address} />
     </section>
   );
 }

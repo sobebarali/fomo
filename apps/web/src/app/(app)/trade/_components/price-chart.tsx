@@ -41,15 +41,7 @@ function queryErrorCode(error: unknown): string {
   return "UPSTREAM_ERROR";
 }
 
-export function PriceChart({
-  address,
-  candles,
-  error,
-}: {
-  address: string;
-  candles: Candle[];
-  error: string | null;
-}) {
+export function PriceChart({ address }: { address: string }) {
   const [range, setRange] = useState<Range>(DEFAULT_RANGE);
   const [ready, setReady] = useState(false);
 
@@ -60,7 +52,6 @@ export function PriceChart({
   const config = RANGE_CONFIG[range];
   const query = useQuery({
     enabled: ready,
-    initialData: range === DEFAULT_RANGE ? { candles } : undefined,
     queryFn: () =>
       client.chart.candles({
         address,
@@ -71,12 +62,10 @@ export function PriceChart({
       }),
     queryKey: ["chart-candles", address, range],
     refetchInterval: ready && config.pollMs ? config.pollMs : false,
-    refetchOnMount: false,
     staleTime: config.pollMs ?? 30_000,
   });
 
   const points = query.data?.candles ?? [];
-  const seedError = range === DEFAULT_RANGE ? error : null;
 
   return (
     <div>
@@ -104,9 +93,14 @@ export function PriceChart({
         </div>
       </div>
       {ready ? (
-        renderChartArea({ points, isError: query.isError, query, seedError })
+        renderChartArea({
+          points,
+          isError: query.isError,
+          isLoading: query.isLoading,
+          query,
+        })
       ) : (
-        <div className="h-[18rem] w-full" />
+        <ChartSkeleton />
       )}
     </div>
   );
@@ -115,13 +109,13 @@ export function PriceChart({
 function renderChartArea({
   points,
   isError,
+  isLoading,
   query,
-  seedError,
 }: {
   points: Candle[];
   isError: boolean;
+  isLoading: boolean;
   query: { error: unknown };
-  seedError: string | null;
 }) {
   if (points.length > 0) {
     return <AreaCanvas points={points} />;
@@ -129,10 +123,14 @@ function renderChartArea({
   if (isError) {
     return <ChartPlaceholder code={queryErrorCode(query.error)} tone="error" />;
   }
-  if (seedError) {
-    return <ChartPlaceholder code={seedError} tone="error" />;
+  if (isLoading) {
+    return <ChartSkeleton />;
   }
   return <ChartPlaceholder code={null} tone="empty" />;
+}
+
+function ChartSkeleton() {
+  return <div className="h-[18rem] w-full animate-pulse bg-[#101617]" />;
 }
 
 function AreaCanvas({ points }: { points: Candle[] }) {

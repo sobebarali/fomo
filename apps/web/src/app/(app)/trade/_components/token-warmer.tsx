@@ -15,10 +15,16 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-// Mirror the reads `/trade/[address]` makes server-side so the cache keys line up.
-async function warmToken(address: string): Promise<void> {
+// Warm the token header — the only read `/trade/[address]` blocks on, so once cached, navigating to
+// that token is instant.
+async function warmHeader(address: string): Promise<void> {
+  await client.tokens.get({ address }).catch(() => undefined);
+}
+
+// Warm the streamed panels too (chart / holders / trades), so they fill in from cache instead of
+// cold-fetching when their tab/island mounts.
+async function warmPanels(address: string): Promise<void> {
   await Promise.allSettled([
-    client.tokens.get({ address }),
     client.chart.candles({ address, interval: "15m" }),
     client.holders.list({ address, limit: 20 }),
     client.trades.recent({ address, limit: 30 }),
@@ -39,14 +45,26 @@ export function TokenWarmer({ addresses }: { addresses: string[] }) {
     async function run() {
       // Let the token the user landed on render first — it shares the rate limiter.
       await sleep(START_DELAY_MS);
+
+      // Phase 1: warm every header first (1 call each) so navigation to any trending token becomes
+      // instant as fast as possible.
+      for (const address of targets) {
+        if (cancelled) {
+          return;
+        }
+        await warmHeader(address);
+      }
+
+      // Phase 2: keep the headers fresh and warm the streamed panels, looping with a pause so passes
+      // don't pile up.
       while (!cancelled) {
         for (const address of targets) {
           if (cancelled) {
             return;
           }
-          await warmToken(address);
+          await warmHeader(address);
+          await warmPanels(address);
         }
-        // Re-warm after a pause so the cache keeps refreshing without passes piling up.
         await sleep(COOLDOWN_MS);
       }
     }

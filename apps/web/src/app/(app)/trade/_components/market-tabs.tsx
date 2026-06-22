@@ -18,34 +18,35 @@ type Tab = "trades" | "holders" | "activity" | "about";
 
 export function MarketTabs({
   address,
-  holdersError,
-  holders,
-  initialTrades,
   token,
   variant = "desktop",
 }: {
   address: string;
-  holdersError: string | null;
-  holders: Holder[];
-  initialTrades: Trade[];
   token: TokenDetail | null;
   variant?: "desktop" | "mobile";
 }) {
   const [active, setActive] = useState<Tab>("trades");
-  const [pollLiveTrades, setPollLiveTrades] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setPollLiveTrades(true);
+    setMounted(true);
   }, []);
 
+  // Both tables stream client-side (no server seed) and only fetch when their tab is active, so
+  // navigating to a token blocks on nothing here — the data fills in from the warm cache.
   const trades = useQuery({
-    enabled: active === "trades" && pollLiveTrades,
-    initialData: { items: initialTrades },
+    enabled: active === "trades" && mounted,
     queryFn: () => client.trades.recent({ address, limit: 30 }),
     queryKey: ["trades", address],
-    refetchInterval: active === "trades" && pollLiveTrades ? 15_000 : false,
-    refetchOnMount: false,
+    refetchInterval: active === "trades" && mounted ? 15_000 : false,
     staleTime: 15_000,
+  });
+
+  const holders = useQuery({
+    enabled: active === "holders" && mounted,
+    queryFn: () => client.holders.list({ address, limit: 20 }),
+    queryKey: ["holders", address],
+    staleTime: 30_000,
   });
 
   const tabs: { label: string; value: Tab }[] =
@@ -85,11 +86,14 @@ export function MarketTabs({
           <TradesTable
             isError={trades.isError}
             isFetching={trades.isFetching}
-            trades={trades.data.items}
+            trades={trades.data?.items}
           />
         ) : null}
         {active === "holders" ? (
-          <HoldersTable error={holdersError} holders={holders} />
+          <HoldersTable
+            holders={holders.data?.items}
+            isError={holders.isError}
+          />
         ) : null}
         {active === "activity" ? <ActivityEmpty /> : null}
         {active === "about" ? <AboutToken token={token} /> : null}
@@ -105,10 +109,13 @@ function TradesTable({
 }: {
   isError: boolean;
   isFetching: boolean;
-  trades: Trade[];
+  trades: Trade[] | undefined;
 }) {
   if (isError) {
     return <EmptyState label="Live trades are unavailable." tone="red" />;
+  }
+  if (trades === undefined) {
+    return <TableSkeleton />;
   }
   if (trades.length === 0) {
     return <EmptyState label="No recent trades returned for this token." />;
@@ -150,14 +157,17 @@ function TradesTable({
 }
 
 function HoldersTable({
-  error,
   holders,
+  isError,
 }: {
-  error: string | null;
-  holders: Holder[];
+  holders: Holder[] | undefined;
+  isError: boolean;
 }) {
-  if (error) {
+  if (isError) {
     return <EmptyState label="Holder data is unavailable." tone="red" />;
+  }
+  if (holders === undefined) {
+    return <TableSkeleton />;
   }
   if (holders.length === 0) {
     return <EmptyState label="No holder rows returned for this token." />;
@@ -183,6 +193,16 @@ function HoldersTable({
             {holder.percentage.toFixed(2)}%
           </span>
         </div>
+      ))}
+    </div>
+  );
+}
+
+function TableSkeleton() {
+  return (
+    <div className="flex flex-col gap-2 p-3">
+      {[0, 1, 2, 3, 4, 5].map((row) => (
+        <div className="h-6 w-full animate-pulse bg-[#101617]" key={row} />
       ))}
     </div>
   );
