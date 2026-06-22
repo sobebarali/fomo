@@ -22,7 +22,8 @@
       "@orpc/zod": "^1.13.14",
       "@types/react": "^19.2.15",
       "@types/react-dom": "^19.2.3",
-      "tailwindcss": "^4.1.18"
+      "tailwindcss": "^4.1.18",
+      "vitest": "^4.1.8"
     }
   },
   "type": "module",
@@ -30,6 +31,8 @@
     "dev": "turbo dev",
     "build": "turbo build",
     "check-types": "turbo check-types",
+    "test": "turbo test",
+    "prepare": "husky",
     "dev:web": "turbo -F web dev",
     "db:push": "turbo -F @fomo/db db:push",
     "db:studio": "turbo -F @fomo/db db:studio",
@@ -55,6 +58,7 @@
     "@biomejs/biome": "2.4.16",
     "@fomo/config": "workspace:*",
     "@types/node": "^22.13.14",
+    "husky": "latest",
     "turbo": "^2.9.16",
     "typescript": "catalog:",
     "ultracite": "7.8.3"

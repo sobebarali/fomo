@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@fomo/api": "workspace:*",
+    "@fomo/db": "workspace:*",
     "@fomo/env": "workspace:*",
     "@fomo/ui": "workspace:*",
     "@orpc/client": "catalog:",

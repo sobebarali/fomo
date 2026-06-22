@@ -54,6 +54,30 @@ Dev: `bun run dev` (web on http://localhost:3001). DB: `bun run db:push` / `db:s
 10. **Match the codebase's conventions, even if you disagree.** Conformance > taste. Surface harmful
     conventions; don't fork silently.
 
+## Spec-Driven Development (SDD) + TDD
+
+We follow **SDD**: the spec **is** a per-module `AGENTS.md` colocated with the code, and `CLAUDE.md`
+is a symlink to it (one file, read by Claude Code / opencode / Codex alike). Colocated
+`*.integration.test.ts` files assert that contract. This mirrors
+`/Users/sobebarali/Desktop/Personal/rahos`. There is no central `docs/` or `specs/` tree.
+
+11. **Read the nearest `AGENTS.md` first.** Every module / significant directory carries one; it is
+    the contract for that code. Start there before reading or writing the implementation.
+12. **Spec-first, doc in lockstep.** Write or update the module's `AGENTS.md` (procedures · Zod input ·
+    output · error codes · side effects) **before/with** the code. Code change without a doc update is
+    a defect (doc drift). Edit `AGENTS.md` only — `CLAUDE.md` is a symlink to it.
+13. **New module = folder + `AGENTS.md` + `CLAUDE.md` symlink**, then (when implemented) `schema.ts` +
+    `index.ts` + a colocated `*.integration.test.ts`. Scaffold by copying a reference folder
+    (`scripts/new-module.sh`) — don't re-derive the shape.
+14. **Tests verify intent, not just behavior.** Assert oRPC **error codes** (the taxonomy in
+    [`packages/api/AGENTS.md`](packages/api/AGENTS.md)) + Zod-validated I/O + side effects — never
+    message strings. Testing trophy: maximize static analysis → integration is the bulk → thin e2e →
+    selective unit. Mock only the external service edges (BirdEye / Alchemy / Jupiter / Privy); the DB
+    runs for real via **PGlite**. Full doctrine: [`packages/config/AGENTS.md`](packages/config/AGENTS.md).
+15. **Plan non-trivial work first** — anything touching >2 files, the data model, or a public API surface.
+16. **Record decisions in the module's `AGENTS.md`** — vetted dependency/approach choices and the
+    rejected alternatives (Rules 5–6), so the "why" lives where the code lives.
+
 ## Domain hard rules (never violated)
 
 - **Secrets never reach the browser.** BirdEye/Alchemy/Jupiter API keys and any Privy app secret
@@ -90,8 +114,40 @@ fomo/
 │   ├── db/             # Drizzle schema (src/schema) + Postgres queries
 │   ├── ui/             # shared shadcn/ui primitives + Tailwind tokens
 │   ├── env/            # validated env (t3-env + Zod)
-│   └── config/         # shared tsconfig/tooling base
+│   └── config/         # shared tsconfig/tooling base + testing doctrine + Vitest/PGlite harness
 ```
+
+Every module folder also carries its own `AGENTS.md` (+ `CLAUDE.md` symlink) — the spec for that code.
+
+## Module map
+
+Each row is a module with its own `AGENTS.md`. API contract format + error taxonomy:
+[`packages/api/AGENTS.md`](packages/api/AGENTS.md). Testing doctrine:
+[`packages/config/AGENTS.md`](packages/config/AGENTS.md).
+
+| Module | Path | Role |
+|--------|------|------|
+| API surface | `packages/api` | oRPC contract format, error taxonomy, context, shared building blocks |
+| Routers tree | `packages/api/src/routers` | the procedure tree merged into `appRouter` |
+| `auth` | `packages/api/src/routers/auth` | Privy session verify + current user (Apple/Google sign-in) |
+| `tokens` | `packages/api/src/routers/tokens` | trending list + token detail (BirdEye), cached |
+| `chart` | `packages/api/src/routers/chart` | OHLCV candles (BirdEye) → TradingView |
+| `holders` | `packages/api/src/routers/holders` | top holders (BirdEye) |
+| `trades` | `packages/api/src/routers/trades` | live trades (BirdEye) |
+| `swap` | `packages/api/src/routers/swap` | Jupiter quote + execute-prep; client signs via Privy |
+| `portfolio` | `packages/api/src/routers/portfolio` | wallet balances + user position (Alchemy) |
+| `birdeye` | `packages/api/src/integrations/birdeye` | BirdEye client + cache + rate-limit |
+| `alchemy` | `packages/api/src/integrations/alchemy` | Solana RPC client |
+| `jupiter` | `packages/api/src/integrations/jupiter` | swap quotes/execution client |
+| `privy` | `packages/api/src/integrations/privy` | server-side token verification |
+| `db` | `packages/db` | Drizzle schema (`users`, …) + queries + PGlite test harness |
+| `env` | `packages/env` | validated env (server vs web keys) |
+| `ui` | `packages/ui` | shared shadcn/ui primitives + Tailwind tokens |
+| `config` | `packages/config` | tsconfig base + **testing doctrine** + Vitest/PGlite harness |
+| `web` | `apps/web` | Next.js app — RSC boundaries, route handler, providers |
+| landing | `apps/web/src/app/(marketing)` | ChadWallet landing page |
+| trade | `apps/web/src/app/(app)/trade` | trading page (3-column) |
+| banners | `apps/web/src/components/banners` | rotating token banners (top + bottom) |
 
 Deployment: Vercel (web) + a managed Postgres (Supabase). Docker Compose exists for local
 (`bun run docker:up`). See `README.md` for setup and scripts.

@@ -1,5 +1,6 @@
 import { createContext } from "@fomo/api/context";
 import { appRouter } from "@fomo/api/routers/index";
+import { db } from "@fomo/db";
 import { OpenAPIHandler } from "@orpc/openapi/fetch";
 import { OpenAPIReferencePlugin } from "@orpc/openapi/plugins";
 import { onError } from "@orpc/server";
@@ -32,7 +33,7 @@ const apiHandler = new OpenAPIHandler(appRouter, {
 async function handleRequest(req: NextRequest) {
   const rpcResult = await rpcHandler.handle(req, {
     prefix: "/api/rpc",
-    context: await createContext(req),
+    context: await createContext(req, { db }),
   });
   if (rpcResult.response) {
     return rpcResult.response;
@@ -40,7 +41,7 @@ async function handleRequest(req: NextRequest) {
 
   const apiResult = await apiHandler.handle(req, {
     prefix: "/api/rpc/api-reference",
-    context: await createContext(req),
+    context: await createContext(req, { db }),
   });
   if (apiResult.response) {
     return apiResult.response;

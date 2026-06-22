@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  # On PRs run only what changed (Turbo --affected); on push run everything.
+  AFFECTED: ${{ github.event_name == 'pull_request' && '--affected' || '' }}
+  TURBO_SCM_BASE: ${{ github.event.pull_request.base.sha }}
+  TURBO_SCM_HEAD: ${{ github.event.pull_request.head.sha }}
+
+jobs:
+  static:
+    name: Static (types + lint)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.5
+      - name: Cache turbo
+        uses: actions/cache@v4
+        with:
+          path: .turbo/cache
+          key: turbo-static-${{ runner.os }}-${{ github.sha }}
+          restore-keys: turbo-static-${{ runner.os }}-
+      - run: bun install --frozen-lockfile
+      - name: Type-check
+        run: bun run check-types ${{ env.AFFECTED }}
+      - name: Lint (Ultracite/Biome)
+        run: bun x ultracite check
+
+  test:
+    name: Unit + integration
+    needs: [static]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.5
+      - name: Cache turbo
+        uses: actions/cache@v4
+        with:
+          path: .turbo/cache
+          key: turbo-test-${{ runner.os }}-${{ github.sha }}
+          restore-keys: turbo-test-${{ runner.os }}-
+      - run: bun install --frozen-lockfile
+      # PGlite is in-process — integration tests need no DB service.
+      - name: Test (unit + *.integration.test.ts)
+        run: bun run test ${{ env.AFFECTED }}

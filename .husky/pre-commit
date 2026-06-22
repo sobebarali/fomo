@@ -1,0 +1,31 @@
+# Exit on any error
+set -e
+
+# ① static analysis — a type failure gates the commit like a failing test
+# (testing trophy; see packages/config/AGENTS.md).
+bun run check-types
+
+# ②④ integration + unit tests (real DB via PGlite; offline, no Docker).
+# `bun run test` = turbo → per-package `vitest run`. Bare `bun test` bypasses the
+# Vitest config / PGlite harness — don't use it.
+bun run test
+
+# ③ format staged files with Ultracite, then re-stage them.
+STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACMR)
+if [ -z "$STAGED_FILES" ]; then
+  exit 0
+fi
+
+bun x ultracite fix
+FORMAT_EXIT_CODE=$?
+
+echo "$STAGED_FILES" | while IFS= read -r file; do
+  if [ -f "$file" ]; then
+    git add -- "$file"
+  fi
+done
+
+if [ $FORMAT_EXIT_CODE -ne 0 ]; then
+  echo "Ultracite found issues that could not be auto-fixed."
+  exit $FORMAT_EXIT_CODE
+fi
