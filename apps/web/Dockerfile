@@ -4,8 +4,11 @@ WORKDIR /app
 ENV SKIP_ENV_VALIDATION=1
 
 COPY . .
-RUN --mount=type=cache,target=/root/.bun/install/cache bun install
+RUN bun install
 
+# NEXT_PUBLIC_* is inlined at build time; Railway supplies it as a build arg.
+ARG NEXT_PUBLIC_PRIVY_APP_ID
+ENV NEXT_PUBLIC_PRIVY_APP_ID=$NEXT_PUBLIC_PRIVY_APP_ID
 ENV NODE_ENV=production
 RUN cd apps/web && bun run build
 
@@ -15,6 +18,7 @@ ENV NODE_ENV=production
 
 COPY --from=builder /app/apps/web/.next/standalone ./
 COPY --from=builder /app/apps/web/.next/static ./apps/web/.next/static
+COPY --from=builder /app/apps/web/public ./apps/web/public
 
 ENV HOSTNAME=0.0.0.0
 ENV PORT=3001
