@@ -17,12 +17,14 @@
 | Rule | Why |
 |------|------|
 | Sorted descending by amount; `rank` is 1-based and server-assigned. | Stable display order; client doesn't re-rank. |
-| `percentage` computed from circulating supply at the boundary (rounded), not raw. | One rounding rule; UI shows a consistent %. |
+| `percentage` = `amount / totalSupply * 100`, rounded to **2 decimals** at the boundary, not raw. | One rounding rule; UI shows a consistent %. |
+| Supply unknown (`token` null or `totalSupply <= 0`) → `percentage` is `0` (no `NOT_FOUND`). | Holders still render; % is the only field that degrades. |
 | Read-through cache per `address` (short TTL — holders drift slowly). | Free-tier safe without staleness that matters. |
 
 ## Dependencies
 
-- **Calls:** `birdeye.holders(address, limit)`. **Feeds:** trading-page holders tab.
+- **Calls:** `birdeye.holders(address, limit)` + `birdeye.token(address)` (for `totalSupply`), issued in
+  parallel — both cached in the integration. **Feeds:** trading-page holders tab.
 
 ## Hardest invariant — percentages sum sanely
 
