@@ -1,0 +1,70 @@
+{
+  "jsonrpc": "2.0",
+  "result": {
+    "context": {
+      "apiVersion": "4.0.2",
+      "slot": 428151348
+    },
+    "value": [
+      {
+        "account": {
+          "data": {
+            "parsed": {
+              "info": {
+                "isNative": false,
+                "mint": "Dr12Gb7e28jczJrAsuwMnkuoKfqnnBkkUDCJsqD6z5w6",
+                "owner": "GThUX1Atko4tqhN2NaiTazWSeFWMuiUvfFnyJyUghFMJ",
+                "state": "initialized",
+                "tokenAmount": {
+                  "amount": "4200009661722957124",
+                  "decimals": 5,
+                  "uiAmount": 42000096617229.57,
+                  "uiAmountString": "42000096617229.57124"
+                }
+              },
+              "type": "account"
+            },
+            "program": "spl-token",
+            "space": 165
+          },
+          "executable": false,
+          "lamports": 2039280,
+          "owner": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+          "rentEpoch": 18446744073709551615,
+          "space": 165
+        },
+        "pubkey": "FU5ekUAFNJthazV9SAN6o4zs1qPCaLHTP1gsFZd5BUHH"
+      },
+      {
+        "account": {
+          "data": {
+            "parsed": {
+              "info": {
+                "isNative": false,
+                "mint": "Ct5S83KSSgyZxeXabSUaYGEQEsnbU5koj2KxFU2svxPy",
+                "owner": "GThUX1Atko4tqhN2NaiTazWSeFWMuiUvfFnyJyUghFMJ",
+                "state": "initialized",
+                "tokenAmount": {
+                  "amount": "100000000000000",
+                  "decimals": 6,
+                  "uiAmount": 100000000.0,
+                  "uiAmountString": "100000000"
+                }
+              },
+              "type": "account"
+            },
+            "program": "spl-token",
+            "space": 165
+          },
+          "executable": false,
+          "lamports": 2039280,
+          "owner": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+          "rentEpoch": 18446744073709551615,
+          "space": 165
+        },
+        "pubkey": "5hCZoD2EbYGhH1W16ML5EWEq4PK6yGMk1WVcyvfiiiZi"
+      }
+    ]
+  },
+  "id": 1
+}
