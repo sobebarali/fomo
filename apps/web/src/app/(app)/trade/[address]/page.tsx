@@ -1,21 +1,14 @@
 import { notFound } from "next/navigation";
 
-import {
-  type TokenSummary as BannerTokenSummary,
-  TokenBanner,
-} from "@/components/banners/token-banner";
 import { client } from "@/utils/orpc";
 import { MarketTabs } from "../_components/market-tabs";
 import { PositionCard } from "../_components/position-card";
 import { RateLimitRefresher } from "../_components/rate-limit-refresher";
 import {
   ChartPanel,
-  FloatingAlert,
   MobileStats,
   MobileTokenHeader,
   TokenHeaderPanel,
-  TradeTopBar,
-  TrendingSidebar,
 } from "../_components/server-panels";
 import { MobileSwapBar, SwapPanel } from "../_components/swap-panel";
 import type {
@@ -24,7 +17,6 @@ import type {
   Loadable,
   MarketErrorCode,
   TokenDetail,
-  TokenSummary,
   Trade,
 } from "../_components/types";
 
@@ -73,16 +65,12 @@ async function load<T>(promise: Promise<T>): Promise<Loadable<T>> {
 export default async function TradePage({ params }: TradePageProps) {
   const { address } = await params;
 
-  const trendingPromise = load(
-    client.tokens.trending({ limit: 30, sort: "trending" })
-  );
   const tokenPromise = load(client.tokens.get({ address }));
   const chartPromise = load(client.chart.candles({ address, interval: "15m" }));
   const holdersPromise = load(client.holders.list({ address, limit: 20 }));
   const tradesPromise = load(client.trades.recent({ address, limit: 30 }));
 
-  const [trending, tokenResult, chart, holders, trades] = await Promise.all([
-    trendingPromise,
+  const [tokenResult, chart, holders, trades] = await Promise.all([
     tokenPromise,
     chartPromise,
     holdersPromise,
@@ -97,7 +85,6 @@ export default async function TradePage({ params }: TradePageProps) {
   }
 
   const token: TokenDetail | null = tokenResult.data;
-  const bannerTokens = (trending.data?.items ?? []) as BannerTokenSummary[];
   const candles: Candle[] = chart.data?.candles ?? [];
   const holderRows: Holder[] = holders.data?.items ?? [];
   const tradeRows: Trade[] = trades.data?.items ?? [];
@@ -106,32 +93,19 @@ export default async function TradePage({ params }: TradePageProps) {
   // Any rate-limited panel → poll the server until it clears (the client islands self-retry; the
   // purely server-rendered panels need this nudge).
   const rateLimited = [
-    trending.error,
     tokenResult.error,
     chart.error,
     holders.error,
     trades.error,
   ].includes("RATE_LIMITED");
 
+  // Only the per-token content region — the persistent chrome (banners, top bar, trending sidebar)
+  // lives in the route `layout.tsx`, so switching tokens re-renders just this slot, not the app.
   return (
-    <main className="dark min-h-svh bg-[#0b0f10] text-[#f2fff7]">
-      <div className="hidden lg:block">
-        <TokenBanner tokens={bannerTokens} />
-      </div>
-      <TradeTopBar />
+    <div className="min-w-0">
       <MobileTokenHeader token={token} />
-      <FloatingAlert />
       {rateLimited ? <RateLimitRefresher /> : null}
-      <div className="grid lg:h-[calc(100svh-137px)] lg:grid-cols-[320px_minmax(0,1fr)_360px]">
-        <TrendingSidebar
-          activeAddress={address}
-          result={
-            trending as Loadable<{
-              items: TokenSummary[];
-              nextCursor: string | null;
-            }>
-          }
-        />
+      <div className="grid lg:h-full lg:grid-cols-[minmax(0,1fr)_360px]">
         <section className="min-w-0 overflow-y-auto pb-40 lg:pb-0">
           <div className="hidden lg:block">
             <TokenHeaderPanel token={token} />
@@ -170,10 +144,7 @@ export default async function TradePage({ params }: TradePageProps) {
           <PositionCard address={address} />
         </aside>
       </div>
-      <div className="hidden lg:block">
-        <TokenBanner reverse tokens={bannerTokens} />
-      </div>
       <MobileSwapBar token={token} />
-    </main>
+    </div>
   );
 }

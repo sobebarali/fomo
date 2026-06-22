@@ -1,13 +1,14 @@
-// Shown while the server resolves the trade route: the `/trade` redirect's trending lookup and the
-// `/trade/[address]` market panels each await BirdEye, which can take a couple seconds.
+// Fallback for the layout's content slot while `/trade/[address]` awaits BirdEye. The persistent
+// chrome (banners, top bar, sidebar) stays mounted in `layout.tsx`, so only this region spins —
+// switching tokens no longer reloads the whole app.
 export default function TradeLoading() {
   return (
-    <main className="dark flex min-h-svh items-center justify-center bg-[#0b0f10]">
+    <div className="flex min-h-[60svh] items-center justify-center lg:h-full">
       <div
         aria-label="Loading market data"
         className="size-8 animate-spin rounded-full border-2 border-white/15 border-t-[#16e27b]"
         role="status"
       />
-    </main>
+    </div>
   );
 }
