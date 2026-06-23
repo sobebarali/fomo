@@ -18,9 +18,6 @@ export function PositionCard({ address }: { address: string }) {
     enabled: ready && authenticated,
     queryFn: () => client.portfolio.position({ address }),
     queryKey: ["position", address],
-    // 5s = the price cache TTL backing the position value; faster wouldn't be fresher.
-    refetchInterval: ready && authenticated ? 5000 : false,
-    staleTime: 5000,
   });
 
   return (

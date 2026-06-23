@@ -32,23 +32,18 @@ export function MarketTabs({
     setMounted(true);
   }, []);
 
-  // Both tables stream client-side (no server seed) and only fetch when their tab is active, so
-  // navigating to a token blocks on nothing here — the data fills in from the warm cache.
+  // Both tables stream client-side (no server seed) and only fetch when their tab is first opened —
+  // one fetch each, no polling (free-tier CU budget). They reuse the client cache for 5min.
   const trades = useQuery({
     enabled: active === "trades" && mounted,
     queryFn: () => client.trades.recent({ address, limit: 30 }),
     queryKey: ["trades", address],
-    // 5s = the trades cache TTL; polling faster wouldn't return fresher data.
-    refetchInterval: active === "trades" && mounted ? 5000 : false,
-    staleTime: 5000,
   });
 
   const holders = useQuery({
     enabled: active === "holders" && mounted,
     queryFn: () => client.holders.list({ address, limit: 20 }),
     queryKey: ["holders", address],
-    refetchInterval: active === "holders" && mounted ? 30_000 : false,
-    staleTime: 30_000,
   });
 
   const tabs: { label: string; value: Tab }[] =

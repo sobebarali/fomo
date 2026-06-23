@@ -1,20 +1,17 @@
 "use client";
 
 import { cn } from "@fomo/ui/lib/utils";
-import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
 
-import { client } from "@/utils/orpc";
 import { formatChange, formatPrice } from "./format";
 import { ErrorBlock } from "./server-panels";
 import { TokenLogo } from "./token-logo";
 import type { Loadable, TokenSummary } from "./types";
 
 // Lives in the trade layout so it persists across token clicks; the active row is derived from the
-// URL (usePathname) rather than a prop, since the layout doesn't see the `[address]` param. Seeded
-// by the server result, then polled so the trending prices update in place.
+// URL (usePathname) rather than a prop, since the layout doesn't see the `[address]` param. Renders
+// the server-fetched trending result directly — no client polling (free-tier CU budget).
 export function TrendingSidebar({
   result,
 }: {
@@ -22,22 +19,7 @@ export function TrendingSidebar({
 }) {
   const pathname = usePathname();
   const activeAddress = pathname.split("/")[2] ?? "";
-
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  const live = useQuery({
-    enabled: mounted,
-    initialData: result.data ?? undefined,
-    queryFn: () => client.tokens.trending({ limit: 30, sort: "trending" }),
-    queryKey: ["trending-sidebar"],
-    refetchInterval: mounted ? 30_000 : false,
-    staleTime: 30_000,
-  });
-
-  const items = live.data?.items ?? result.data?.items ?? null;
+  const items = result.data?.items ?? null;
 
   return (
     <aside className="hidden min-h-0 border-white/10 border-r bg-[#0b0f10] lg:flex lg:flex-col">

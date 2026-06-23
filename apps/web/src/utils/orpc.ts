@@ -25,6 +25,11 @@ export function createQueryClient() {
         retry: (_failureCount, error) => isRateLimited(error),
         retryDelay: (attemptIndex) =>
           Math.min(1000 * 2 ** attemptIndex, 30_000),
+        // BirdEye free tier is a tiny CU budget, so spend it only on real navigation: no polling
+        // (set per-island), no refetch on window focus, and treat data as fresh for 5min so
+        // revisiting a token in the same session reuses the client cache instead of refetching.
+        refetchOnWindowFocus: false,
+        staleTime: 300_000,
       },
     },
     queryCache: new QueryCache({

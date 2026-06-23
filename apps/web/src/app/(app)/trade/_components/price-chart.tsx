@@ -24,10 +24,10 @@ const LINE_COLOR = "#16e27b";
 
 const RANGE_CONFIG: Record<
   Range,
-  { interval: Interval; lookbackSeconds?: number; pollMs?: number }
+  { interval: Interval; lookbackSeconds?: number }
 > = {
-  LIVE: { interval: "1m", lookbackSeconds: 10_800, pollMs: 15_000 },
-  "1D": { interval: "15m", pollMs: 20_000 },
+  LIVE: { interval: "1m", lookbackSeconds: 10_800 },
+  "1D": { interval: "15m" },
   "1W": { interval: "1H", lookbackSeconds: 604_800 },
   "1M": { interval: "4H", lookbackSeconds: 2_592_000 },
   "1Y": { interval: "1D", lookbackSeconds: 31_536_000 },
@@ -61,8 +61,6 @@ export function PriceChart({ address }: { address: string }) {
         interval: config.interval,
       }),
     queryKey: ["chart-candles", address, range],
-    refetchInterval: ready && config.pollMs ? config.pollMs : false,
-    staleTime: config.pollMs ?? 30_000,
   });
 
   const points = query.data?.candles ?? [];
