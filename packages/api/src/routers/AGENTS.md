@@ -9,12 +9,12 @@
 | Router | Owns | Reads from |
 |--------|------|------------|
 | `auth/` | Verify the Privy session, return the current user; upsert the user row on first sign-in. | Privy + `users` |
-| `tokens/` | Trending list + single-token detail/metadata. Cursor-paginated list. | BirdEye |
-| `chart/` | OHLCV candles for a token + interval → feeds the TradingView chart. | BirdEye |
-| `holders/` | Top holders for a token. | BirdEye |
-| `trades/` | Recent/live trades for a token. | BirdEye |
+| `tokens/` | Trending list + single-token detail/metadata. Cursor-paginated list. | market |
+| `chart/` | OHLCV candles for a token + interval → feeds the TradingView chart. | market |
+| `holders/` | Top holders for a token. | market |
+| `trades/` | Recent/live trades for a token. | market |
 | `swap/` | Jupiter quote for a buy/sell + the unsigned transaction to sign client-side (Privy). | Jupiter |
-| `portfolio/` | The user's SOL + token balances and per-token position (cost basis, P/L). | Alchemy + `swap`/BirdEye prices |
+| `portfolio/` | The user's SOL + token balances and per-token position (cost basis, P/L). | Alchemy + `swap`/market prices |
 
 `healthCheck` (the scaffold stub) stays in `index.ts` alongside the live routers until replaced.
 

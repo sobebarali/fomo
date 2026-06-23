@@ -1,0 +1,22 @@
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+    "value": [
+      {
+        "address": "5hpfC9VBxVcoW9opCnM2PqR6YWRLBzrBpabJTZnwwNiw",
+        "amount": "699666605122337574",
+        "decimals": 5,
+        "uiAmount": 6996666051223.375,
+        "uiAmountString": "6996666051223.37574"
+      },
+      {
+        "address": "2vPvEovB1gw8bAUqasThEv6YMAdJ77AU3RxiUNqknEiw",
+        "amount": "471204766940904418",
+        "decimals": 5,
+        "uiAmount": 4712047669409.045,
+        "uiAmountString": "4712047669409.04418"
+      }
+    ]
+  }
+}

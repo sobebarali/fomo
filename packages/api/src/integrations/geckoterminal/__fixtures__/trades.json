@@ -1,0 +1,28 @@
+{
+  "data": [
+    {
+      "attributes": {
+        "block_timestamp": "2026-06-23T07:59:03Z",
+        "kind": "sell",
+        "price_from_in_usd": "0.00000442450477770673406036968464571700599579928898574295385893205549",
+        "price_to_in_usd": "70.045827872176645778265366774686140698751277341",
+        "from_token_amount": "85474968.19857",
+        "to_token_amount": "5.399099656",
+        "tx_hash": "55HLTGCpwUdfejoS4kC5M5QTK71g6yuVXnfoCvdJYAzwCKQ1dM7tn8PReXzfMHtPzvpkC93XbjjwsmQzV1D5AFNa",
+        "tx_from_address": "MfDuWeqSHEqTFVYZ7LoexgAK9dxk7cy4DFJWjWMGVWa"
+      }
+    },
+    {
+      "attributes": {
+        "block_timestamp": "2026-06-23T07:59:42Z",
+        "kind": "buy",
+        "price_from_in_usd": "70.017875960340898958153960771443391890957113704",
+        "price_to_in_usd": "0.00000442721401649122078863219061507371397357270262760132161281827456",
+        "from_token_amount": "0.0006",
+        "to_token_amount": "9489.20143",
+        "tx_hash": "4a5DwA9xFKcGi6rHd6zYrbLQSwhsaCvHMgQ7sExaD7B4avY2cWozBTcATRC8REBGSthKuVCeStDFSAgsbGJp5t51",
+        "tx_from_address": "G6zuVp79eBixXFKtzjWN8zCdeKoYTscG5pysbJrFRAAe"
+      }
+    }
+  ]
+}

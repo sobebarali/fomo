@@ -4,7 +4,7 @@ import {
   RateLimitError,
   UpstreamError,
 } from "../../integrations/_shared/errors";
-import { birdeye } from "../../integrations/birdeye";
+import { market } from "../../integrations/market";
 import { candlesInput, candlesOutput } from "./schema";
 
 // Default range when from/to omitted: ~300 candles back from now, scaled per interval.
@@ -19,7 +19,7 @@ const INTERVAL_SECONDS = {
 } as const satisfies Record<string, number>;
 const DEFAULT_CANDLES = 300;
 
-// One BirdEye failure → one taxonomy code: 429 → RATE_LIMITED, anything else → UPSTREAM_ERROR.
+// One upstream failure → one taxonomy code: 429 → RATE_LIMITED, anything else → UPSTREAM_ERROR.
 // Re-throws anything not from the integration (e.g. a NOT_FOUND we raised), never leaking a raw 500.
 function mapUpstreamError(err: unknown): never {
   if (err instanceof RateLimitError) {
@@ -48,7 +48,7 @@ const candles = publicProcedure
       throw new ORPCError("BAD_REQUEST");
     }
     try {
-      const series = await birdeye.ohlcv({
+      const series = await market.ohlcv({
         address: input.address,
         interval: input.interval,
         from,

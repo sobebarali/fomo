@@ -4,10 +4,10 @@ import {
   RateLimitError,
   UpstreamError,
 } from "../../integrations/_shared/errors";
-import { birdeye } from "../../integrations/birdeye";
+import { market } from "../../integrations/market";
 import { listInput, listOutput } from "./schema";
 
-// One BirdEye failure → one taxonomy code: 429 → RATE_LIMITED, anything else → UPSTREAM_ERROR.
+// One upstream failure → one taxonomy code: 429 → RATE_LIMITED, anything else → UPSTREAM_ERROR.
 // Re-throws anything not from the integration, never leaking a raw 500.
 function mapUpstreamError(err: unknown): never {
   if (err instanceof RateLimitError) {
@@ -33,8 +33,8 @@ const list = publicProcedure
       // `holders` has no supply; `token` carries totalSupply. Both are cached in the integration —
       // on the trading page the detail is usually already warm, so the 2nd call is a cache hit.
       const [holders, token] = await Promise.all([
-        birdeye.holders({ address: input.address, limit: input.limit }),
-        birdeye.token({ address: input.address }),
+        market.holders({ address: input.address, limit: input.limit }),
+        market.token({ address: input.address }),
       ]);
       const supply = token?.totalSupply ?? 0;
       // Sort defensively (don't trust upstream order) so `rank` is authoritative.

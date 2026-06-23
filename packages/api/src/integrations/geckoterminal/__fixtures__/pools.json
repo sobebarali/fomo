@@ -1,0 +1,30 @@
+{
+  "data": [
+    {
+      "id": "solana_6oFWm7KPLfxnwMb3z5xwBoXNSPP3JJyirAPqPSiVcnsp",
+      "attributes": {
+        "reserve_in_usd": "319353.2392"
+      },
+      "relationships": {
+        "base_token": {
+          "data": {
+            "id": "solana_DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263"
+          }
+        }
+      }
+    },
+    {
+      "id": "solana_5Dp922oSaj9rdLHTxZzq1B7QV7KmwY7U7K1JNCRhc45J",
+      "attributes": {
+        "reserve_in_usd": "136279.4916"
+      },
+      "relationships": {
+        "base_token": {
+          "data": {
+            "id": "solana_DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263"
+          }
+        }
+      }
+    }
+  ]
+}

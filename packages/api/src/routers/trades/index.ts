@@ -4,10 +4,10 @@ import {
   RateLimitError,
   UpstreamError,
 } from "../../integrations/_shared/errors";
-import { birdeye } from "../../integrations/birdeye";
+import { market } from "../../integrations/market";
 import { recentInput, recentOutput } from "./schema";
 
-// One BirdEye failure → one taxonomy code: 429 → RATE_LIMITED, anything else → UPSTREAM_ERROR.
+// One upstream failure → one taxonomy code: 429 → RATE_LIMITED, anything else → UPSTREAM_ERROR.
 // Re-throws anything not from the integration, never leaking a raw 500.
 function mapUpstreamError(err: unknown): never {
   if (err instanceof RateLimitError) {
@@ -27,7 +27,7 @@ const recent = publicProcedure
     try {
       // Newest-first already (the integration requests sort_type=desc); the map preserves order.
       // ponytail: trust integration's sort_type=desc; re-sort here only if the contract ever needs ordering independent of upstream.
-      const trades = await birdeye.trades({
+      const trades = await market.trades({
         address: input.address,
         limit: input.limit,
       });

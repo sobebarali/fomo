@@ -8,9 +8,9 @@ import {
 } from "../../integrations/_shared/errors";
 import { alchemy } from "../../integrations/alchemy";
 import type { TokenBalance } from "../../integrations/alchemy/schema";
-import { birdeye } from "../../integrations/birdeye";
-import type { TokenDetail } from "../../integrations/birdeye/schema";
+import { market } from "../../integrations/market";
 import type { AuthSession } from "../../integrations/privy/schema";
+import type { TokenDetail } from "../../schemas/token";
 import { testContext } from "../../test-support/context";
 import { appRouter } from "../index";
 
@@ -27,18 +27,18 @@ vi.mock("../../integrations/alchemy", async (importActual) => {
   };
 });
 
-vi.mock("../../integrations/birdeye", async (importActual) => {
+vi.mock("../../integrations/market", async (importActual) => {
   const actual =
-    await importActual<typeof import("../../integrations/birdeye")>();
+    await importActual<typeof import("../../integrations/market")>();
   return {
     ...actual,
-    birdeye: { ...actual.birdeye, token: vi.fn() },
+    market: { ...actual.market, token: vi.fn() },
   };
 });
 
 const mockGetSolBalance = vi.mocked(alchemy.getSolBalance);
 const mockGetTokenBalances = vi.mocked(alchemy.getTokenBalances);
-const mockToken = vi.mocked(birdeye.token);
+const mockToken = vi.mocked(market.token);
 
 const WSOL = "So11111111111111111111111111111111111111112";
 const BONK = "DezXAZ8z7PnrnRJjz3gnnr7oNkmw6MEv1QyMXXNbB263";

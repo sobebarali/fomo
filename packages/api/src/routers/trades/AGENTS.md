@@ -1,7 +1,7 @@
 # `trades` router (`trades`)
 
-> Recent/live trades for a token — the trading page's trades tab. Reads BirdEye via
-> [`../../integrations/birdeye`](../../integrations/birdeye). Format/errors: [`../../../AGENTS.md`](../../../AGENTS.md).
+> Recent/live trades for a token — the trading page's trades tab. Reads market data via
+> [`../../integrations/market`](../../integrations/market). Format/errors: [`../../../AGENTS.md`](../../../AGENTS.md).
 
 ## Procedures
 
@@ -22,13 +22,13 @@
 
 ## Dependencies
 
-- **Calls:** `birdeye.trades(address, limit)`. **Feeds:** trading-page trades tab.
+- **Calls:** `market.trades(address, limit)`. **Feeds:** trading-page trades tab.
 
 ## Hardest invariant — every row is real
 
-No synthetic trades: each item maps 1:1 to a BirdEye trade with a real `txHash`. Test mocks BirdEye
+No synthetic trades: each item maps 1:1 to an on-chain trade with a real `txHash`. Test mocks the market client
 trades: ordering, side normalization, shape, 429 → `RATE_LIMITED`, malformed → `UPSTREAM_ERROR`.
 
 ## Links
 
-Token: [`../tokens/AGENTS.md`](../tokens/AGENTS.md) · BirdEye: [`../../integrations/birdeye/AGENTS.md`](../../integrations/birdeye/AGENTS.md) · Tree: [`../AGENTS.md`](../AGENTS.md)
+Token: [`../tokens/AGENTS.md`](../tokens/AGENTS.md) · Market: [`../../integrations/market/AGENTS.md`](../../integrations/market/AGENTS.md) · Tree: [`../AGENTS.md`](../AGENTS.md)

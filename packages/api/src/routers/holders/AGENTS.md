@@ -1,7 +1,7 @@
 # `holders` router (`holders`)
 
-> Top holders for a token — the trading page's holders tab. Reads BirdEye via
-> [`../../integrations/birdeye`](../../integrations/birdeye). Format/errors: [`../../../AGENTS.md`](../../../AGENTS.md).
+> Top holders for a token — the trading page's holders tab. Reads market data via
+> [`../../integrations/market`](../../integrations/market). Format/errors: [`../../../AGENTS.md`](../../../AGENTS.md).
 
 ## Procedures
 
@@ -23,14 +23,14 @@
 
 ## Dependencies
 
-- **Calls:** `birdeye.holders(address, limit)` + `birdeye.token(address)` (for `totalSupply`), issued in
+- **Calls:** `market.holders(address, limit)` + `market.token(address)` (for `totalSupply`), issued in
   parallel — both cached in the integration. **Feeds:** trading-page holders tab.
 
 ## Hardest invariant — percentages sum sanely
 
 Returned `percentage` values are consistent with `amount`/supply and never exceed 100% in aggregate
-for the top set. Test mocks BirdEye holders: ordering, rank assignment, percentage math, 429 → `RATE_LIMITED`.
+for the top set. Test mocks the market client holders: ordering, rank assignment, percentage math, 429 → `RATE_LIMITED`.
 
 ## Links
 
-Token: [`../tokens/AGENTS.md`](../tokens/AGENTS.md) · BirdEye: [`../../integrations/birdeye/AGENTS.md`](../../integrations/birdeye/AGENTS.md) · Tree: [`../AGENTS.md`](../AGENTS.md)
+Token: [`../tokens/AGENTS.md`](../tokens/AGENTS.md) · Market: [`../../integrations/market/AGENTS.md`](../../integrations/market/AGENTS.md) · Tree: [`../AGENTS.md`](../AGENTS.md)

@@ -133,14 +133,17 @@ Each row is a module with its own `AGENTS.md`. API contract format + error taxon
 | API surface | `packages/api` | oRPC contract format, error taxonomy, context, shared building blocks |
 | Routers tree | `packages/api/src/routers` | the procedure tree merged into `appRouter` |
 | `auth` | `packages/api/src/routers/auth` | Privy session verify + current user (Apple/Google sign-in) |
-| `tokens` | `packages/api/src/routers/tokens` | trending list + token detail (BirdEye), cached |
-| `chart` | `packages/api/src/routers/chart` | OHLCV candles (BirdEye) → TradingView |
-| `holders` | `packages/api/src/routers/holders` | top holders (BirdEye) |
-| `trades` | `packages/api/src/routers/trades` | live trades (BirdEye) |
+| `tokens` | `packages/api/src/routers/tokens` | trending list + token detail (via `market`), cached |
+| `chart` | `packages/api/src/routers/chart` | OHLCV candles (via `market`) → TradingView |
+| `holders` | `packages/api/src/routers/holders` | top holders (via `market`) |
+| `trades` | `packages/api/src/routers/trades` | live trades (via `market`) |
 | `swap` | `packages/api/src/routers/swap` | Jupiter quote + execute-prep; client signs via Privy |
-| `portfolio` | `packages/api/src/routers/portfolio` | wallet balances + user position (Alchemy) |
-| `birdeye` | `packages/api/src/integrations/birdeye` | BirdEye client + cache + rate-limit |
-| `alchemy` | `packages/api/src/integrations/alchemy` | Solana RPC client |
+| `portfolio` | `packages/api/src/routers/portfolio` | wallet balances + user position (Alchemy + `market` prices) |
+| `market` | `packages/api/src/integrations/market` | **facade** — composes free non-CU sources into the market-data surface routers call |
+| `dexscreener` | `packages/api/src/integrations/dexscreener` | token price/mc/vol/liquidity/metadata (keyless) |
+| `geckoterminal` | `packages/api/src/integrations/geckoterminal` | trending + OHLCV + recent trades (keyless) |
+| `birdeye` | `packages/api/src/integrations/birdeye` | legacy BirdEye client (kept as reference; not in the read path — its free CU quota is exhausted) |
+| `alchemy` | `packages/api/src/integrations/alchemy` | Solana RPC client (balances, holders, token supply) |
 | `jupiter` | `packages/api/src/integrations/jupiter` | swap quotes/execution client |
 | `privy` | `packages/api/src/integrations/privy` | server-side token verification |
 | `db` | `packages/db` | Drizzle schema (`users`, …) + queries + PGlite test harness |

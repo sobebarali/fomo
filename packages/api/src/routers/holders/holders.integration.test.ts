@@ -6,25 +6,25 @@ import {
   RateLimitError,
   UpstreamError,
 } from "../../integrations/_shared/errors";
-import { birdeye } from "../../integrations/birdeye";
-import type { Holder, TokenDetail } from "../../integrations/birdeye/schema";
+import { market } from "../../integrations/market";
+import type { Holder, TokenDetail } from "../../schemas/token";
 import { testContext } from "../../test-support/context";
 import { appRouter } from "../index";
 
 // Mock only the external edge: keep the real error classes (so the router's `instanceof` maps fire)
 // and the view types, but make `holders`/`token` controllable vi.fns. The router imports the
-// `birdeye` singleton directly (no context seam), so the module is the seam.
-vi.mock("../../integrations/birdeye", async (importActual) => {
+// `market` singleton directly (no context seam), so the module is the seam.
+vi.mock("../../integrations/market", async (importActual) => {
   const actual =
-    await importActual<typeof import("../../integrations/birdeye")>();
+    await importActual<typeof import("../../integrations/market")>();
   return {
     ...actual,
-    birdeye: { ...actual.birdeye, holders: vi.fn(), token: vi.fn() },
+    market: { ...actual.market, holders: vi.fn(), token: vi.fn() },
   };
 });
 
-const mockHolders = vi.mocked(birdeye.holders);
-const mockToken = vi.mocked(birdeye.token);
+const mockHolders = vi.mocked(market.holders);
+const mockToken = vi.mocked(market.token);
 
 // A real, well-formed mint — passes the SolanaMint regex so we exercise the upstream path, not BAD_REQUEST.
 const MINT = "So11111111111111111111111111111111111111112";

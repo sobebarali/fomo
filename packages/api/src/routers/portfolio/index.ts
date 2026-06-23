@@ -5,7 +5,7 @@ import {
   UpstreamError,
 } from "../../integrations/_shared/errors";
 import { alchemy } from "../../integrations/alchemy";
-import { birdeye } from "../../integrations/birdeye";
+import { market } from "../../integrations/market";
 import { balancesOutput, positionInput, positionOutput } from "./schema";
 
 const WSOL = "So11111111111111111111111111111111111111112";
@@ -41,8 +41,8 @@ const balances = protectedProcedure
       // One token-detail call per held mint; the integration owns caching/rate-limits, and batching
       // stays deferred until the paid multi-price path is worth exposing.
       const [wsol, ...details] = await Promise.all([
-        birdeye.token({ address: WSOL }),
-        ...held.map((token) => birdeye.token({ address: token.address })),
+        market.token({ address: WSOL }),
+        ...held.map((token) => market.token({ address: token.address })),
       ]);
 
       const tokens = held.flatMap((token, index) => {
@@ -96,7 +96,7 @@ const position = protectedProcedure
         return null;
       }
 
-      const detail = await birdeye.token({ address: input.address });
+      const detail = await market.token({ address: input.address });
       const priceUsd = detail?.priceUsd ?? 0;
 
       return {

@@ -12,6 +12,12 @@
 |--------|---------|---------|
 | `getSolBalance(wallet)` | `number` (SOL) | `portfolio.balances` |
 | `getTokenBalances(wallet)` | `Array<{ address: string; amount: number; decimals: number }>` | `portfolio.balances`, `portfolio.position` |
+| `holders({ address, limit })` | `Holder[]` (owner + amount) | `market.holders` → `holders.list` |
+| `getTokenSupply({ address })` | `number` (uiAmount) | `market.token` (fills `totalSupply`) + holders `%` |
+
+`holders` = `getTokenLargestAccounts` (top 20 token accounts) → batched `getMultipleAccounts`
+(jsonParsed) to resolve each account's **owner** wallet (capped at 20, the RPC limit). `getTokenSupply`
+backs the supply DexScreener can't provide.
 
 ## Conventions (Rule → Why)
 

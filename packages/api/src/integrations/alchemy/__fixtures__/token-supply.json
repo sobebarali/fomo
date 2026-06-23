@@ -1,0 +1,12 @@
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+    "value": {
+      "amount": "8799471827428982545",
+      "decimals": 5,
+      "uiAmount": 87994718274289.83,
+      "uiAmountString": "87994718274289.82545"
+    }
+  }
+}

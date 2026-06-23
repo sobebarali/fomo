@@ -1,7 +1,7 @@
 # `chart` router (`chart`)
 
 > OHLCV candles for a token + interval — feeds the TradingView chart on the trading page. Reads
-> BirdEye via [`../../integrations/birdeye`](../../integrations/birdeye). Format/errors:
+> market data via [`../../integrations/market`](../../integrations/market). Format/errors:
 > [`../../../AGENTS.md`](../../../AGENTS.md).
 
 ## Procedures
@@ -18,19 +18,19 @@
 | Rule | Why |
 |------|------|
 | Candles ascending by `time`, `time` in UNIX seconds (TradingView's expected shape). | The client charting lib consumes this directly; no client-side re-sort. |
-| Cache per `(address, interval)`; the latest (open) candle is short-TTL, closed candles long-TTL. | Closed candles never change — caching them hard keeps us inside BirdEye free-tier. |
+| Cache per `(address, interval)`; the latest (open) candle is short-TTL, closed candles long-TTL. | Closed candles never change — caching them hard keeps us inside the free-tier limits. |
 | Default a sane range when `from`/`to` omitted; reject `from > to` as `BAD_REQUEST`. | Predictable payloads; bad ranges fail fast, not upstream. |
 
 ## Dependencies
 
-- **Calls:** `birdeye.ohlcv(address, interval, range)`. **Feeds:** the trading-page price chart (TradingView).
+- **Calls:** `market.ohlcv(address, interval, range)`. **Feeds:** the trading-page price chart (TradingView).
 
 ## Hardest invariant — chart matches price
 
-The latest candle's `close` must track the same BirdEye price `tokens.get` reports (same source), so
-the chart and the headline price never disagree. Test mocks BirdEye OHLCV: shape + ascending order +
+The latest candle's `close` must track the same market price `tokens.get` reports (same source), so
+the chart and the headline price never disagree. Test mocks the market client OHLCV: shape + ascending order +
 429 → `RATE_LIMITED` + invalid range → `BAD_REQUEST`.
 
 ## Links
 
-Token: [`../tokens/AGENTS.md`](../tokens/AGENTS.md) · BirdEye: [`../../integrations/birdeye/AGENTS.md`](../../integrations/birdeye/AGENTS.md) · Tree: [`../AGENTS.md`](../AGENTS.md)
+Token: [`../tokens/AGENTS.md`](../tokens/AGENTS.md) · Market: [`../../integrations/market/AGENTS.md`](../../integrations/market/AGENTS.md) · Tree: [`../AGENTS.md`](../AGENTS.md)

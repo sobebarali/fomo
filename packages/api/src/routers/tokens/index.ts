@@ -4,11 +4,11 @@ import {
   RateLimitError,
   UpstreamError,
 } from "../../integrations/_shared/errors";
-import { birdeye } from "../../integrations/birdeye";
+import { market } from "../../integrations/market";
 import { decodeCursor, paginate } from "../_shared/pagination";
 import { getInput, tokenDetail, trendingInput, trendingOutput } from "./schema";
 
-// One BirdEye failure → one taxonomy code: 429 → RATE_LIMITED, anything else → UPSTREAM_ERROR.
+// One upstream failure → one taxonomy code: 429 → RATE_LIMITED, anything else → UPSTREAM_ERROR.
 // Re-throws anything not from the integration (e.g. a NOT_FOUND we raised), never leaking a raw 500.
 function mapUpstreamError(err: unknown): never {
   if (err instanceof RateLimitError) {
@@ -27,7 +27,7 @@ const trending = publicProcedure
   .handler(async ({ input }) => {
     const offset = decodeCursor(input.cursor);
     try {
-      const items = await birdeye.trending({
+      const items = await market.trending({
         sort: input.sort,
         limit: input.limit,
         offset,
@@ -49,7 +49,7 @@ const get = publicProcedure
   .output(tokenDetail)
   .handler(async ({ input }) => {
     try {
-      const token = await birdeye.token({ address: input.address });
+      const token = await market.token({ address: input.address });
       if (!token) {
         throw new ORPCError("NOT_FOUND");
       }
