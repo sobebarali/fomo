@@ -31,19 +31,23 @@
 
 ## Data + boundaries
 
-> **Fetch-once, no polling (free-tier CU budget).** BirdEye's free tier is ~30k compute units/month —
-> far too little for a live-polling UI — so every surface fetches **once per navigation** and is *not*
-> polled. Global TanStack defaults (`utils/orpc.ts`): `refetchOnWindowFocus: false`, `staleTime` 5min
-> (revisiting a token in the same session reuses the client cache, zero extra calls). A page reload is
-> the manual refresh. Re-enable polling + live updates only on a paid BirdEye tier — see [Decisions].
+> **Live via polling, rate-safe via the server cache.** Reads now go to **free, non-CU** providers
+> (the [`market`](../../../../../packages/api/src/integrations/market/AGENTS.md) facade:
+> DexScreener / GeckoTerminal / Alchemy), so the client islands **poll** for live updates. This stays
+> within the providers' req/min limits regardless of user count because the server's
+> stale-while-revalidate cache (a process singleton) dedups upstream calls to ~1 per TTL per key. The
+> token header + trending sidebar/banners stay **server-rendered** (refresh on navigation); the chart's
+> `LIVE` tab shows the moving price. Global TanStack defaults (`utils/orpc.ts`): `refetchOnWindowFocus:
+> false`, `staleTime` 5min. *A single-process SSE fan-out (one server poll → push to all clients) is a
+> further scale optimization, not needed for rate safety.*
 
 | Concern | Source | Boundary |
 |---------|--------|----------|
 | Trending list + top/bottom banners | `tokens.trending` | server-rendered in `layout.tsx` (one cached call, feeds `TrendingSidebar` + both `TokenBanner`s) |
 | Token header / stats | `tokens.get` | server-rendered in `[address]/page.tsx` — **the only read it blocks on** (fast nav) |
-| Chart render + range-tab refetch | `chart.candles` | client island (`lightweight-charts` area series); self-fetches once per range with a skeleton |
-| Holders + trades + tab state | `holders.list` / `trades.recent` | client islands; fetch once on tab activation with a skeleton (no server seed, no poll) |
-| Position | `portfolio.position` | protected client island; fetches once after Privy auth |
+| Chart render + range-tab refetch | `chart.candles` | client island (`lightweight-charts` area series); self-fetches per range, `LIVE` polls 20s |
+| Holders + trades + tab state | `holders.list` / `trades.recent` | client islands; fetch on tab activation with a skeleton; trades poll 10s, holders 60s |
+| Position | `portfolio.position` | protected client island; polls 20s after Privy auth |
 | Buy/sell quote + build/sign/send | `swap.quote` → `swap.buildTransaction` → Privy Solana wallet | client island; quote first, confirm before signing |
 
 ## Conventions (Rule → Why)

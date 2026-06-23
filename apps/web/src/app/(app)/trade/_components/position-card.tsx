@@ -18,6 +18,7 @@ export function PositionCard({ address }: { address: string }) {
     enabled: ready && authenticated,
     queryFn: () => client.portfolio.position({ address }),
     queryKey: ["position", address],
+    refetchInterval: ready && authenticated ? 20_000 : false,
   });
 
   return (

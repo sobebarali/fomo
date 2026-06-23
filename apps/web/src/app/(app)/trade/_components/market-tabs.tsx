@@ -32,18 +32,21 @@ export function MarketTabs({
     setMounted(true);
   }, []);
 
-  // Both tables stream client-side (no server seed) and only fetch when their tab is first opened —
-  // one fetch each, no polling (free-tier CU budget). They reuse the client cache for 5min.
+  // Both tables stream client-side (no server seed) and poll while their tab is open. Safe within the
+  // free providers' req/min: the server's stale-while-revalidate cache dedups upstream calls to ~1
+  // per TTL per token regardless of how many clients poll.
   const trades = useQuery({
     enabled: active === "trades" && mounted,
     queryFn: () => client.trades.recent({ address, limit: 30 }),
     queryKey: ["trades", address],
+    refetchInterval: active === "trades" && mounted ? 10_000 : false,
   });
 
   const holders = useQuery({
     enabled: active === "holders" && mounted,
     queryFn: () => client.holders.list({ address, limit: 20 }),
     queryKey: ["holders", address],
+    refetchInterval: active === "holders" && mounted ? 60_000 : false,
   });
 
   const tabs: { label: string; value: Tab }[] =
