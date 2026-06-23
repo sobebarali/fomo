@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@fomo/ui/lib/utils";
+import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -9,17 +10,24 @@ import { ErrorBlock } from "./server-panels";
 import { TokenLogo } from "./token-logo";
 import type { Loadable, TokenSummary } from "./types";
 
+interface Trending {
+  items: TokenSummary[];
+  nextCursor: string | null;
+}
+
 // Lives in the trade layout so it persists across token clicks; the active row is derived from the
-// URL (usePathname) rather than a prop, since the layout doesn't see the `[address]` param. Renders
-// the server-fetched trending result directly — no client polling (free-tier CU budget).
-export function TrendingSidebar({
-  result,
-}: {
-  result: Loadable<{ items: TokenSummary[]; nextCursor: string | null }>;
-}) {
+// URL (usePathname) rather than a prop, since the layout doesn't see the `[address]` param. Seeds from
+// the server result and goes live via the SSE `trending` channel (MarketStream writes ["trending"]);
+// no client polling.
+export function TrendingSidebar({ result }: { result: Loadable<Trending> }) {
   const pathname = usePathname();
   const activeAddress = pathname.split("/")[2] ?? "";
-  const items = result.data?.items ?? null;
+  const live = useQuery<Trending>({
+    queryKey: ["trending"],
+    enabled: false,
+    initialData: result.data ?? undefined,
+  });
+  const items = live.data?.items ?? result.data?.items ?? null;
 
   return (
     <aside className="hidden min-h-0 border-white/10 border-r bg-[#0b0f10] lg:flex lg:flex-col">

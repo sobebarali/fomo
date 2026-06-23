@@ -32,14 +32,13 @@ export function MarketTabs({
     setMounted(true);
   }, []);
 
-  // Both tables stream client-side (no server seed) and poll while their tab is open. Safe within the
-  // free providers' req/min: the server's stale-while-revalidate cache dedups upstream calls to ~1
-  // per TTL per token regardless of how many clients poll.
+  // Trades go live via SSE (`trades:<address>` → cache); the initial fetch covers the moment before
+  // the first push. Holders aren't on the SSE channel, so they poll while their tab is open. Both are
+  // rate-safe — the server's stale-while-revalidate cache dedups upstream calls to ~1/TTL per token.
   const trades = useQuery({
     enabled: active === "trades" && mounted,
     queryFn: () => client.trades.recent({ address, limit: 30 }),
     queryKey: ["trades", address],
-    refetchInterval: active === "trades" && mounted ? 10_000 : false,
   });
 
   const holders = useQuery({

@@ -3,7 +3,8 @@ import { db } from "@fomo/db";
 import { createRouterClient } from "@orpc/server";
 import type { ReactNode } from "react";
 
-import { TokenBanner } from "@/components/banners/token-banner";
+import { LiveTokenBanner } from "@/components/banners/live-token-banner";
+import { MarketStream } from "./_components/market-stream";
 import { FloatingAlert, TradeTopBar } from "./_components/server-panels";
 import { TrendingSidebar } from "./_components/trending-sidebar";
 import type {
@@ -58,8 +59,9 @@ export default async function TradeLayout({
 
   return (
     <main className="dark min-h-svh bg-[#0b0f10] text-[#f2fff7]">
+      <MarketStream />
       <div className="hidden lg:block">
-        <TokenBanner tokens={bannerTokens} />
+        <LiveTokenBanner initial={bannerTokens} />
       </div>
       <TradeTopBar />
       <FloatingAlert />
@@ -68,7 +70,7 @@ export default async function TradeLayout({
         {children}
       </div>
       <div className="hidden lg:block">
-        <TokenBanner reverse tokens={bannerTokens} />
+        <LiveTokenBanner initial={bannerTokens} reverse />
       </div>
     </main>
   );

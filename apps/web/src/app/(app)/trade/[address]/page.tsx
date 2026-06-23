@@ -3,14 +3,13 @@ import { notFound } from "next/navigation";
 import { client } from "@/utils/orpc";
 import { MarketTabs } from "../_components/market-tabs";
 import { PositionCard } from "../_components/position-card";
-import { RateLimitRefresher } from "../_components/rate-limit-refresher";
-import {
-  ChartPanel,
-  MobileStats,
-  MobileTokenHeader,
-  TokenHeaderPanel,
-} from "../_components/server-panels";
+import { ChartPanel } from "../_components/server-panels";
 import { MobileSwapBar, SwapPanel } from "../_components/swap-panel";
+import {
+  LiveMobileStats,
+  LiveMobileTokenHeader,
+  LiveTokenHeaderPanel,
+} from "../_components/token-live";
 import type {
   Loadable,
   MarketErrorCode,
@@ -74,23 +73,19 @@ export default async function TradePage({ params }: TradePageProps) {
   }
 
   const token: TokenDetail | null = tokenResult.data;
-  // The token header is the one server-rendered panel; nudge a refresh if it came back rate-limited.
-  const rateLimited = tokenResult.error === "RATE_LIMITED";
 
   // Only the per-token content — `section` (col 2) + `aside` (col 3) are direct grid items of the
   // layout's 3-column grid; the mobile-only header/swap-bar are `lg:hidden` so they take no desktop
-  // grid cell. The persistent chrome (banners, top bar, trending sidebar) lives in `layout.tsx`, so
-  // switching tokens re-renders just these slots, not the whole app.
+  // grid cell. The header seeds from the server token and goes live via SSE (`token:<address>`).
   return (
     <>
-      <MobileTokenHeader token={token} />
-      {rateLimited ? <RateLimitRefresher /> : null}
+      <LiveMobileTokenHeader address={address} initialToken={token} />
       <section className="min-w-0 overflow-y-auto pb-40 lg:pb-0">
         <div className="hidden lg:block">
-          <TokenHeaderPanel token={token} />
+          <LiveTokenHeaderPanel address={address} initialToken={token} />
         </div>
         <ChartPanel address={address} />
-        <MobileStats token={token} />
+        <LiveMobileStats address={address} initialToken={token} />
         <div className="hidden lg:block">
           <MarketTabs address={address} token={token} variant="desktop" />
         </div>
