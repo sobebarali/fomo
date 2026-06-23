@@ -22,6 +22,21 @@ function truncate(address: string) {
   return `${address.slice(0, 4)}…${address.slice(-4)}`;
 }
 
+// The human identity from the social/email login (Apple/Google/email), preferred over the wallet
+// address for the account chip.
+function displayName(user: ReturnType<typeof usePrivy>["user"]): string | null {
+  if (!user) {
+    return null;
+  }
+  const candidates = [
+    user.google?.name,
+    user.google?.email,
+    user.apple?.email,
+    user.email?.address,
+  ];
+  return candidates.find((value) => value && value.length > 0) ?? null;
+}
+
 export function AuthButton() {
   const { ready, authenticated, user } = usePrivy();
   const router = useRouter();
@@ -73,18 +88,33 @@ export function AuthButton() {
   }
 
   const walletAddress = me.data?.walletAddress ?? solanaWalletAddress;
-  const accountLabel = walletAddress ? truncate(walletAddress) : "Account";
+  const name = displayName(user);
+  const accountLabel =
+    name ?? (walletAddress ? truncate(walletAddress) : "Account");
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger render={<Button size="sm" variant="outline" />}>
+      <DropdownMenuTrigger
+        render={
+          <Button
+            className="max-w-[12rem] truncate"
+            size="sm"
+            variant="outline"
+          />
+        }
+      >
         {accountLabel}
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        {walletAddress ? (
+        {name || walletAddress ? (
           <>
             <DropdownMenuGroup>
-              <DropdownMenuLabel>{truncate(walletAddress)}</DropdownMenuLabel>
+              {name ? <DropdownMenuLabel>{name}</DropdownMenuLabel> : null}
+              {walletAddress ? (
+                <DropdownMenuLabel className="font-mono font-normal text-[#7d8b86] text-xs">
+                  {truncate(walletAddress)}
+                </DropdownMenuLabel>
+              ) : null}
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
           </>
