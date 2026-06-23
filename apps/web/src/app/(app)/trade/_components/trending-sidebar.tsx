@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+import { client } from "@/utils/orpc";
 import { formatChange, formatPrice } from "./format";
 import { ErrorBlock } from "./server-panels";
 import { TokenLogo } from "./token-logo";
@@ -24,8 +25,9 @@ export function TrendingSidebar({ result }: { result: Loadable<Trending> }) {
   const activeAddress = pathname.split("/")[2] ?? "";
   const live = useQuery<Trending>({
     queryKey: ["trending"],
-    enabled: false,
+    queryFn: () => client.tokens.trending({ limit: 30, sort: "trending" }),
     initialData: result.data ?? undefined,
+    refetchInterval: 30_000,
   });
   const items = live.data?.items ?? result.data?.items ?? null;
 

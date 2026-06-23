@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { client } from "@/utils/orpc";
 import {
   MobileStats,
   MobileTokenHeader,
@@ -8,19 +9,19 @@ import {
 } from "./server-panels";
 import type { TokenDetail } from "./types";
 
-// Live token header: seeded by the server's `tokens.get` for an instant first paint, then updated by
-// the SSE `token:<address>` channel (MarketStream writes ["token", address]). No client polling — the
-// server poller is the single upstream caller. All three placements share the key, so one push
-// updates them together.
+// Live token header: seeded by the server's `tokens.get` for an instant first paint. SSE
+// (`token:<address>` → MarketStream writes ["token", address]) updates it instantly when the stream
+// flushes; a slow poll is the reliable fallback (Railway buffers SSE intermittently). Rate-safe — the
+// server cache dedups upstream to ~1/TTL regardless of clients. All three placements share the key.
 function useLiveToken(
   address: string,
   initialToken: TokenDetail | null
 ): TokenDetail | null {
   const query = useQuery<TokenDetail | null>({
     queryKey: ["token", address],
-    // SSE feeds the cache; never auto-fetch from the client.
-    enabled: false,
+    queryFn: () => client.tokens.get({ address }),
     initialData: initialToken,
+    refetchInterval: 15_000,
   });
   return query.data ?? initialToken;
 }

@@ -31,24 +31,25 @@
 
 ## Data + boundaries
 
-> **Live via SSE fan-out, free sources.** Reads come from **free, non-CU** providers (the
-> [`market`](../../../../../packages/api/src/integrations/market/AGENTS.md) facade: DexScreener /
-> GeckoTerminal / Alchemy). A single server-side poller (`src/server/market-poller.ts`, started from
-> `instrumentation.ts`) refreshes **trending + the active token's token/trades** and pushes them to all
-> connected clients over **SSE** (`/api/stream`, hub in `src/server/sse-hub.ts`). One client `EventSource`
-> (`MarketStream`, mounted in the trade layout) writes each push into the TanStack cache, so the islands'
-> `useQuery` reads go live with **no per-client polling** — upstream cost is independent of user count.
-> Surfaces not on the SSE channels (chart, holders) poll client-side; `position` is per-user (auth) and
-> polls. All rate-safe via the server's stale-while-revalidate cache (one process singleton) which dedups
-> upstream to ~1 per TTL per key. Global TanStack defaults (`utils/orpc.ts`): `refetchOnWindowFocus:
-> false`, `staleTime` 5min.
+> **Live: poll baseline + SSE accelerator, free sources.** Reads come from **free, non-CU** providers
+> (the [`market`](../../../../../packages/api/src/integrations/market/AGENTS.md) facade: DexScreener /
+> GeckoTerminal / Alchemy). Client islands **poll** for live updates — the reliable path — and a
+> server-side SSE fan-out updates them faster *when it flushes*. The poller (`src/server/market-poller.ts`,
+> started from `instrumentation.ts`) refreshes trending + the active token's token/trades and pushes over
+> **SSE** (`/api/stream`, hub `src/server/sse-hub.ts`); one client `EventSource` (`MarketStream`, mounted in
+> the trade layout) writes each push into the TanStack cache. **Railway's edge proxy buffers SSE
+> intermittently** (a 2KB padding comment + `x-accel-buffering: no` help but aren't fully reliable), so
+> the per-island poll is the guaranteed source and SSE is best-effort. Either way it's rate-safe: the
+> server's stale-while-revalidate cache (one process singleton) dedups upstream to ~1 per TTL per key
+> regardless of client count. Global TanStack defaults (`utils/orpc.ts`): `refetchOnWindowFocus: false`,
+> `staleTime` 5min.
 
 | Concern | Source | Boundary |
 |---------|--------|----------|
-| Trending list + top/bottom banners | `tokens.trending` | server-seeded in `layout.tsx`; `TrendingSidebar` + `LiveTokenBanner` read the shared `["trending"]` cache, **live via SSE** |
-| Token header / stats | `tokens.get` | server-rendered blocking read (fast nav); `token-live.tsx` wrappers seed from it and go **live via SSE** (`["token", address]`) |
+| Trending list + top/bottom banners | `tokens.trending` | server-seeded in `layout.tsx`; `TrendingSidebar` + `LiveTokenBanner` share the `["trending"]` query (poll 30s + SSE) |
+| Token header / stats | `tokens.get` | server-rendered blocking read (fast nav); `token-live.tsx` wrappers seed from it, poll 15s + SSE (`["token", address]`) |
 | Chart render + range-tab refetch | `chart.candles` | client island (`lightweight-charts` area series); self-fetches per range, `LIVE` polls 20s (not on SSE) |
-| Holders + trades + tab state | `holders.list` / `trades.recent` | client islands; fetch on tab activation with a skeleton. **Trades live via SSE** (`["trades", address]`); holders poll 60s (not on SSE) |
+| Holders + trades + tab state | `holders.list` / `trades.recent` | client islands; fetch on tab activation with a skeleton. Trades poll 10s + SSE (`["trades", address]`); holders poll 60s (not on SSE) |
 | Position | `portfolio.position` | protected client island; polls 20s after Privy auth (per-user, not on SSE) |
 | Buy/sell quote + build/sign/send | `swap.quote` → `swap.buildTransaction` → Privy Solana wallet | client island; quote first, confirm before signing |
 
