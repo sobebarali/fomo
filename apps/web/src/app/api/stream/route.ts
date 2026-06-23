@@ -10,6 +10,9 @@ export const dynamic = "force-dynamic";
 
 const HEARTBEAT_MS = 15_000;
 const encoder = new TextEncoder();
+// Railway's edge proxy buffers small responses; a ~2KB comment on connect pushes past its threshold
+// so events flush immediately (standard SSE-behind-a-proxy workaround).
+const PADDING = `:${" ".repeat(2048)}\n\n`;
 
 function frame(channel: string, data: unknown): Uint8Array {
   return encoder.encode(`data: ${JSON.stringify({ channel, data })}\n\n`);
@@ -32,6 +35,7 @@ export function GET(req: NextRequest) {
         }
       };
 
+      safeEnqueue(encoder.encode(PADDING));
       safeEnqueue(encoder.encode(": connected\n\n"));
 
       const unsubscribe = subscribe(channels, (channel, data) =>
@@ -78,6 +82,8 @@ export function GET(req: NextRequest) {
       "content-type": "text/event-stream",
       "cache-control": "no-cache, no-transform",
       connection: "keep-alive",
+      // Hint to disable proxy/Next response buffering for this stream.
+      "x-accel-buffering": "no",
     },
   });
 }
