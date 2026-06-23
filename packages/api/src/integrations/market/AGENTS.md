@@ -10,14 +10,21 @@
 
 | Method | Source |
 |--------|--------|
-| `trending({ sort, limit, offset })` | [`geckoterminal`](../geckoterminal/AGENTS.md) (organic trending pools) |
 | `token({ address })` | [`dexscreener`](../dexscreener/AGENTS.md) (price/mc/vol/liq/logo/links) **+** [`alchemy`](../alchemy/AGENTS.md) `getTokenSupply` for `totalSupply` |
-| `ohlcv({ address, interval, from, to })` | `geckoterminal` (resolve pool → OHLCV) |
-| `trades({ address, limit })` | `geckoterminal` (resolve pool → pool trades) |
 | `holders({ address, limit })` | `alchemy` (largest accounts → owners) |
+| `trending({ sort, limit, offset })` | [`birdeye`](../birdeye/AGENTS.md) — see note |
+| `ohlcv({ address, interval, from, to })` | `birdeye` — see note |
+| `trades({ address, limit })` | `birdeye` — see note |
 
-`createMarketClient(deps?)` takes injectable `{ dexscreener, geckoterminal, alchemy }` (defaults to the
-real singletons) so tests inject fakes; `market` is the shared instance.
+`createMarketClient(deps?)` takes injectable `{ dexscreener, birdeye, alchemy }` (defaults to the real
+singletons) so tests inject fakes; `market` is the shared instance.
+
+> **Why trending/ohlcv/trades are still on BirdEye:** the intended free source for these,
+> [`geckoterminal`](../geckoterminal/AGENTS.md), is **blocked from datacenter IPs** (CoinGecko/GeckoTerminal
+> returns a non-JSON challenge to Railway → `UPSTREAM_ERROR`) — DexScreener + Alchemy work fine from the
+> same host. So these three stay on BirdEye for now. The CU win still holds: `token` (BirdEye's heaviest
+> consumer) moved to DexScreener, so usage is a fraction of before. The GeckoTerminal client is kept
+> in-tree for a future proxy or a datacenter-friendly free source (e.g. Bitquery/Moralis).
 
 ## Conventions (Rule → Why)
 

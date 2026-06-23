@@ -28,7 +28,7 @@ function deps(overrides = {}) {
       holders: vi.fn(() => Promise.resolve([])),
     },
     dexscreener: { token: vi.fn(() => Promise.resolve(baseToken)) },
-    geckoterminal: {
+    birdeye: {
       trending: vi.fn(() => Promise.resolve([])),
       ohlcv: vi.fn(() => Promise.resolve([])),
       trades: vi.fn(() => Promise.resolve([])),
@@ -70,7 +70,7 @@ it("token returns null when DexScreener has no pair", async () => {
   expect(await market.token({ address: ADDRESS })).toBeNull();
 });
 
-it("delegates trending/ohlcv/trades to GeckoTerminal and holders to Alchemy", async () => {
+it("delegates trending/ohlcv/trades to BirdEye and holders to Alchemy", async () => {
   const d = deps();
   const market = createMarketClient(d);
 
@@ -79,16 +79,16 @@ it("delegates trending/ohlcv/trades to GeckoTerminal and holders to Alchemy", as
   await market.trades({ address: ADDRESS, limit: 30 });
   await market.holders({ address: ADDRESS, limit: 20 });
 
-  expect(d.geckoterminal.trending).toHaveBeenCalledTimes(1);
-  expect(d.geckoterminal.ohlcv).toHaveBeenCalledTimes(1);
-  expect(d.geckoterminal.trades).toHaveBeenCalledTimes(1);
+  expect(d.birdeye.trending).toHaveBeenCalledTimes(1);
+  expect(d.birdeye.ohlcv).toHaveBeenCalledTimes(1);
+  expect(d.birdeye.trades).toHaveBeenCalledTimes(1);
   expect(d.alchemy.holders).toHaveBeenCalledTimes(1);
 });
 
 it("propagates an UpstreamError from a delegated source", async () => {
   const market = createMarketClient(
     deps({
-      geckoterminal: {
+      birdeye: {
         trending: vi.fn(() => Promise.reject(new UpstreamError("down"))),
         ohlcv: vi.fn(() => Promise.resolve([])),
         trades: vi.fn(() => Promise.resolve([])),
