@@ -7,8 +7,8 @@ import type {
   TrendingSort,
 } from "../../schemas/token";
 import { type AlchemyClient, alchemy } from "../alchemy";
-import { type BirdEyeClient, birdeye } from "../birdeye";
 import { type DexScreenerClient, dexscreener } from "../dexscreener";
+import { type GeckoTerminalClient, geckoterminal } from "../geckoterminal";
 
 export interface TrendingInput {
   limit: number;
@@ -46,26 +46,23 @@ export interface MarketClient {
 
 export interface MarketDeps {
   alchemy: Pick<AlchemyClient, "getTokenSupply" | "holders">;
-  birdeye: Pick<BirdEyeClient, "ohlcv" | "trades" | "trending">;
   dexscreener: DexScreenerClient;
+  geckoterminal: GeckoTerminalClient;
 }
 
-const DEFAULT_DEPS: MarketDeps = { alchemy, birdeye, dexscreener };
+const DEFAULT_DEPS: MarketDeps = { alchemy, dexscreener, geckoterminal };
 
-/** Compose the working data sources into one market-data client:
- *  - token (price/mc/vol/liq/logo/links) → DexScreener (free, no CU) + Alchemy `getTokenSupply`
- *  - holders → Alchemy RPC (top largest accounts → owners)
- *  - trending / ohlcv / trades → BirdEye. GeckoTerminal (the intended free source for these) is
- *    **blocked from datacenter IPs** (Railway) so it 500s in prod; until a datacenter-friendly free
- *    source lands, these stay on BirdEye — its heaviest consumer (`token`) moved to DexScreener, so
- *    CU usage is a fraction of before. */
+/** Compose the free, non-CU sources into one market-data client:
+ *  - trending / ohlcv / trades → GeckoTerminal (keyless)
+ *  - token (price/mc/vol/liq/logo/links) → DexScreener, enriched with `totalSupply` from Alchemy RPC
+ *  - holders → Alchemy RPC (top largest accounts → owners) */
 export function createMarketClient(
   deps: MarketDeps = DEFAULT_DEPS
 ): MarketClient {
   return {
-    trending: (input) => deps.birdeye.trending(input),
-    ohlcv: (input) => deps.birdeye.ohlcv(input),
-    trades: (input) => deps.birdeye.trades(input),
+    trending: (input) => deps.geckoterminal.trending(input),
+    ohlcv: (input) => deps.geckoterminal.ohlcv(input),
+    trades: (input) => deps.geckoterminal.trades(input),
     holders: (input) => deps.alchemy.holders(input),
     token: async (input) => {
       const [base, totalSupply] = await Promise.all([

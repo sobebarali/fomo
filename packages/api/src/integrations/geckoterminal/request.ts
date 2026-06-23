@@ -16,6 +16,7 @@ export interface RequesterOptions {
 
 // GeckoTerminal pins its response shape behind an Accept-header version (apiguide.geckoterminal.com).
 const ACCEPT = "application/json;version=20230302";
+const TRAILING_SLASH = /\/$/;
 
 /** Shared transport: rate-limit → GET (versioned Accept header) → return the parsed JSON:API body.
  *  Keyless. `429 → RateLimitError`; any other non-2xx / invalid JSON / transport failure →
@@ -27,7 +28,9 @@ export function createRequester({
 }: RequesterOptions): Requester {
   return async (path, params = {}) => {
     await limiter.take();
-    const url = new URL(path, baseUrl);
+    // Concatenate (not `new URL(path, baseUrl)`) — the base has a `/api/v2` path and `path` starts
+    // with `/`, which `new URL` would resolve root-relative and drop the `/api/v2`.
+    const url = new URL(`${baseUrl.replace(TRAILING_SLASH, "")}${path}`);
     for (const [name, value] of Object.entries(params)) {
       if (value !== undefined) {
         url.searchParams.set(name, String(value));

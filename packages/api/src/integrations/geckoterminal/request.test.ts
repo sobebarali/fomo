@@ -28,6 +28,18 @@ it("sends the versioned Accept header", async () => {
   );
 });
 
+it("preserves the /api/v2 base path (path starting with / must not drop it)", async () => {
+  const { request, fetchMock } = requesterWith(() =>
+    Promise.resolve(jsonResponse({ data: [] }))
+  );
+
+  await request("/networks/solana/trending_pools", { include: "base_token" });
+
+  expect(String(fetchMock.mock.calls[0]?.[0])).toBe(
+    "https://api.geckoterminal.com/api/v2/networks/solana/trending_pools?include=base_token"
+  );
+});
+
 it("maps HTTP 429 to RateLimitError", async () => {
   const { request } = requesterWith(() =>
     Promise.resolve(new Response("slow down", { status: 429 }))
