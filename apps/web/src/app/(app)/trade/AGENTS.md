@@ -18,9 +18,9 @@
 - **No blanket cache warmer.** A `TokenWarmer` island that continuously pre-loaded every trending
   token was removed: looping ~30 tokens × 4 reads nonstop burned the BirdEye **free-tier compute-unit
   quota** (UPSTREAM_ERROR storm). Instead, the sidebar warms only user-intent/active tokens:
-  `router.prefetch('/trade/{address}')` plus a bounded TanStack prefetch for `tokens.get`.
-  Trending-row data may render as a same-token preview placeholder while the full `tokens.get`
-  result/SSE update catches up; never show previous-token trades or charts under a new active token.
+  same-token TanStack cache seed from the clicked/focused/hovered trending row. Trending-row data may
+  render as a same-token preview placeholder while the full `tokens.get` result/SSE update catches
+  up; never show previous-token trades or charts under a new active token.
 - **Mobile:** sticky token header with back/share/watch actions, chart + functional
   `LIVE/1D/1W/1M/1Y/MAX` range tabs (`1D` default), compact stats, `Trades`/`Holders`/`About` tabs,
   position card, swap panel, and sticky `Sell` / `Buy {SYMBOL}` actions.
@@ -48,7 +48,7 @@
 | Concern | Source | Boundary |
 |---------|--------|----------|
 | Trending list + top/bottom banners | `tokens.trending` | server-seeded in `layout.tsx`; `TrendingSidebar` + `LiveTokenBanner` share the `["trending"]` query (SSE + 120s fallback poll) |
-| Token header / stats | `tokens.get` | server-rendered blocking read (fast nav); `token-live.tsx` wrappers seed from it, SSE + 60s fallback poll (`["token", address]`) |
+| Token header / stats | `tokens.get` | server-rendered quick seed only (1.2s cap, then render preview/client state); `token-live.tsx` wrappers seed from it or same-token trending preview, SSE + 60s fallback poll (`["token", address]`) |
 | Chart render + range-tab refetch | `chart.candles` | client island; self-fetches per range with interval-rounded windows, dynamically loads `lightweight-charts`, `LIVE` polls 30s (not on SSE) |
 | Holders + trades + tab state | `holders.list` / `trades.recent` | client islands; fetch on tab activation with a skeleton. Trades use SSE + 60s fallback poll (`["trades", address]`); holders poll 120s (not on SSE) |
 | Position | `portfolio.position` | protected client island; polls 20s after Privy auth (per-user, not on SSE) |
@@ -79,10 +79,10 @@
   are client-only); the `chart.candles` contract is covered by `chart.integration.test.ts`.
 - **Anonymous wallet state is explicit.** Swap and position islands show sign-in/connect states and
   do not call protected procedures until Privy reports an authenticated user.
-- **Intent prefetch, not list-wide warming.** TanStack prefetch follows row `pointerenter` / `focus` /
-  `pointerdown` and active-route changes, but only for `tokens.get`. This is deliberately bounded:
-  it makes likely navigation fast, warms the shared Redis provider cache for the server page, and
-  avoids queueing heavier chart/holders/trades reads ahead of the route.
+- **Intent preview, not list-wide warming.** Row `pointerenter` / `focus` / `pointerdown` seeds
+  `["token", address]` from the same trending row only; it does not issue provider reads. This makes
+  navigation paint with stale-but-same-token data, while avoiding duplicate `tokens.get` calls that can
+  queue behind the provider limiter and keep `/trade/[address]` in `loading.tsx`.
 
 ## Links
 

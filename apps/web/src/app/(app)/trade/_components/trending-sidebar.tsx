@@ -3,8 +3,8 @@
 import { cn } from "@fomo/ui/lib/utils";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef } from "react";
+import { usePathname } from "next/navigation";
+import { useCallback } from "react";
 
 import { client } from "@/utils/orpc";
 import { formatChange, formatPrice } from "./format";
@@ -17,12 +17,6 @@ interface Trending {
   nextCursor: string | null;
 }
 
-const PREFETCH_STALE_MS = 60_000;
-
-function prefetchSilently(promise: Promise<unknown>) {
-  promise.catch(() => undefined);
-}
-
 // Lives in the trade layout so it persists across token clicks; the active row is derived from the
 // URL (usePathname) rather than a prop, since the layout doesn't see the `[address]` param. Seeds from
 // the server result and goes live via the SSE `trending` channel (MarketStream writes ["trending"]);
@@ -30,8 +24,6 @@ function prefetchSilently(promise: Promise<unknown>) {
 export function TrendingSidebar({ result }: { result: Loadable<Trending> }) {
   const pathname = usePathname();
   const queryClient = useQueryClient();
-  const router = useRouter();
-  const routePrefetched = useRef(new Set<string>());
   const activeAddress = pathname.split("/")[2] ?? "";
   const live = useQuery<Trending>({
     queryKey: ["trending"],
@@ -40,31 +32,15 @@ export function TrendingSidebar({ result }: { result: Loadable<Trending> }) {
     refetchInterval: 120_000,
   });
   const items = live.data?.items ?? result.data?.items ?? null;
-  const prefetchToken = useCallback(
-    (address: string) => {
-      if (!address) {
+  const seedTokenPreview = useCallback(
+    (token: TokenSummary) => {
+      if (!token.address) {
         return;
       }
-
-      if (!routePrefetched.current.has(address)) {
-        router.prefetch(`/trade/${address}`);
-        routePrefetched.current.add(address);
-      }
-
-      prefetchSilently(
-        queryClient.prefetchQuery({
-          queryKey: ["token", address],
-          queryFn: () => client.tokens.get({ address }),
-          staleTime: PREFETCH_STALE_MS,
-        })
-      );
+      queryClient.setQueryData(["token", token.address], token);
     },
-    [queryClient, router]
+    [queryClient]
   );
-
-  useEffect(() => {
-    prefetchToken(activeAddress);
-  }, [activeAddress, prefetchToken]);
 
   return (
     <aside className="hidden min-h-0 border-white/10 border-r bg-[#0b0f10] lg:flex lg:flex-col">
@@ -95,9 +71,9 @@ export function TrendingSidebar({ result }: { result: Loadable<Trending> }) {
                 )}
                 href={`/trade/${token.address}`}
                 key={token.address}
-                onFocus={() => prefetchToken(token.address)}
-                onPointerDown={() => prefetchToken(token.address)}
-                onPointerEnter={() => prefetchToken(token.address)}
+                onFocus={() => seedTokenPreview(token)}
+                onPointerDown={() => seedTokenPreview(token)}
+                onPointerEnter={() => seedTokenPreview(token)}
               >
                 <span className="font-mono text-[#52605b] text-[10px]">
                   {index + 1}

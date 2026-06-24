@@ -20,6 +20,8 @@ interface TradePageProps {
   params: Promise<{ address: string }>;
 }
 
+const TOKEN_SEED_TIMEOUT_MS = 1200;
+
 function errorCode(error: unknown): MarketErrorCode | "UNKNOWN" {
   if (typeof error !== "object" || error === null) {
     return "UNKNOWN";
@@ -58,12 +60,23 @@ async function load<T>(promise: Promise<T>): Promise<Loadable<T>> {
   }
 }
 
+async function loadTokenSeed(address: string): Promise<Loadable<TokenDetail>> {
+  const token = load(client.tokens.get({ address }));
+  const timeout = new Promise<Loadable<TokenDetail>>((resolve) => {
+    setTimeout(
+      () => resolve({ data: null, error: "UPSTREAM_ERROR" }),
+      TOKEN_SEED_TIMEOUT_MS
+    );
+  });
+  return Promise.race([token, timeout]);
+}
+
 export default async function TradePage({ params }: TradePageProps) {
   const { address } = await params;
 
-  // Block only on the token header — the heaviest, above-the-fold read. Chart / holders / trades
-  // stream in their own client islands, so switching tokens never waits on four BirdEye calls.
-  const tokenResult = await load(client.tokens.get({ address }));
+  // Seed from the server only if token detail is quick. Slow provider reads must not keep the whole
+  // route in `loading.tsx`; the client token query/SSE will fill in full detail after first paint.
+  const tokenResult = await loadTokenSeed(address);
 
   if (
     tokenResult.error === "BAD_REQUEST" ||
