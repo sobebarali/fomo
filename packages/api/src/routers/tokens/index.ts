@@ -1,10 +1,10 @@
-import { ORPCError } from "@orpc/server";
 import { publicProcedure } from "../../index";
 import {
   RateLimitError,
   UpstreamError,
 } from "../../integrations/_shared/errors";
 import { market } from "../../integrations/market";
+import { routerError } from "../_shared/errors";
 import { decodeCursor, paginate } from "../_shared/pagination";
 import { getInput, tokenDetail, trendingInput, trendingOutput } from "./schema";
 
@@ -12,10 +12,10 @@ import { getInput, tokenDetail, trendingInput, trendingOutput } from "./schema";
 // Re-throws anything not from the integration (e.g. a NOT_FOUND we raised), never leaking a raw 500.
 function mapUpstreamError(err: unknown): never {
   if (err instanceof RateLimitError) {
-    throw new ORPCError("RATE_LIMITED");
+    throw routerError("RATE_LIMITED");
   }
   if (err instanceof UpstreamError) {
-    throw new ORPCError("UPSTREAM_ERROR");
+    throw routerError("UPSTREAM_ERROR");
   }
   throw err;
 }
@@ -51,7 +51,7 @@ const get = publicProcedure
     try {
       const token = await market.token({ address: input.address });
       if (!token) {
-        throw new ORPCError("NOT_FOUND");
+        throw routerError("NOT_FOUND");
       }
       return token;
     } catch (err) {

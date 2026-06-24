@@ -1,4 +1,3 @@
-import { ORPCError } from "@orpc/server";
 import { protectedProcedure, publicProcedure } from "../../index";
 import {
   BadRequestError,
@@ -6,6 +5,7 @@ import {
   UpstreamError,
 } from "../../integrations/_shared/errors";
 import { jupiter } from "../../integrations/jupiter";
+import { routerError } from "../_shared/errors";
 import {
   buildTransactionInput,
   buildTransactionOutput,
@@ -15,13 +15,13 @@ import {
 
 function mapUpstreamError(err: unknown): never {
   if (err instanceof RateLimitError) {
-    throw new ORPCError("RATE_LIMITED");
+    throw routerError("RATE_LIMITED");
   }
   if (err instanceof BadRequestError) {
-    throw new ORPCError("BAD_REQUEST", { message: err.message });
+    throw routerError("BAD_REQUEST", { message: err.message });
   }
   if (err instanceof UpstreamError) {
-    throw new ORPCError("UPSTREAM_ERROR");
+    throw routerError("UPSTREAM_ERROR");
   }
   throw err;
 }

@@ -1,4 +1,6 @@
 import { vi } from "vitest";
+import { createCache } from "../_shared/cache";
+import { createLimiter } from "../_shared/limiter";
 import { createAlchemyClient } from "./index";
 
 /** Build a `Response` from a JSON body — the shape `fetch` hands back. */
@@ -18,8 +20,9 @@ export function makeClient(impl: FetchImpl, rpcUrl = "https://rpc.test/key") {
   const client = createAlchemyClient({
     fetch: fetchMock as unknown as typeof fetch,
     rpcUrl,
+    cache: createCache(100),
+    limiter: createLimiter(1000),
     requestsPerSecond: 1000,
-    cacheMax: 100,
   });
   return { client, fetchMock };
 }

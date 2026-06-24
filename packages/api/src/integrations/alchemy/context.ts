@@ -1,16 +1,21 @@
 import { env } from "@fomo/env/server";
-import { type Cache, createCache } from "../_shared/cache";
-import { createLimiter } from "../_shared/limiter";
+import type { Cache } from "../_shared/cache";
+import type { Limiter } from "../_shared/limiter";
+import {
+  createRedisCache,
+  createRedisClient,
+  createRedisLimiter,
+} from "../_shared/redis";
 import { createRequester, type Requester } from "./request";
 
 // Alchemy free tier = 500 CU/s throughput; our JSON-RPC calls cost ~10 CU each, so ~25 rps is the
 // advertised free ceiling (alchemy.com/pricing). Pass `requestsPerSecond` to raise on a paid plan.
 const DEFAULT_RPS = 25;
-const DEFAULT_CACHE_MAX = 500;
 
 export interface AlchemyClientOptions {
-  cacheMax?: number;
+  cache?: Cache;
   fetch?: typeof fetch;
+  limiter?: Limiter;
   requestsPerSecond?: number;
   rpcUrl?: string;
 }
@@ -24,12 +29,22 @@ export interface AlchemyContext {
 export function createContext(
   options: AlchemyClientOptions = {}
 ): AlchemyContext {
-  const limiter = createLimiter(options.requestsPerSecond ?? DEFAULT_RPS);
+  const requestsPerSecond = options.requestsPerSecond ?? DEFAULT_RPS;
+  const redis = createRedisClient(
+    env.UPSTASH_REDIS_REST_URL,
+    env.UPSTASH_REDIS_REST_TOKEN
+  );
+  const limiter =
+    options.limiter ??
+    createRedisLimiter(redis, {
+      prefix: "alchemy",
+      requestsPerSecond,
+    });
   const request = createRequester({
     fetch: options.fetch ?? globalThis.fetch,
     rpcUrl: options.rpcUrl ?? env.ALCHEMY_RPC_URL,
     limiter,
   });
-  const cache = createCache(options.cacheMax ?? DEFAULT_CACHE_MAX);
+  const cache = options.cache ?? createRedisCache(redis, { prefix: "alchemy" });
   return { request, cache };
 }

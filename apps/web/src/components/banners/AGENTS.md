@@ -7,7 +7,8 @@
 
 - **Props:** `{ tokens: TokenSummary[] }` (passed in — the banner does no fetching itself). On the
   trade route, `LiveTokenBanner` (`live-token-banner.tsx`) is the parent that supplies live data: it
-  seeds from the server result and polls the shared `["trending-sidebar"]` query (30s), keeping the
+  seeds from the server result and polls the shared `["trending"]` query (120s fallback; SSE is the
+  primary live path), keeping the
   marquee presentational while its prices update in place.
 - **Behavior:** horizontal auto-scroll/marquee; each pill = logo · symbol · price · 24h % (green up /
   red down). Click/tap a pill → `router.push(\`/trade/\${address}\`)`.

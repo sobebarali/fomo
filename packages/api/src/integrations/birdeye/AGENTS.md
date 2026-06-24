@@ -27,7 +27,7 @@ Each method validates the upstream payload with Zod and returns typed data or th
 | Rule | Why |
 |------|------|
 | Key from `@fomo/env/server` only; never logged, never sent to the client. | Root domain rule — secrets never reach the browser. |
-| **Cache** read-through keyed by endpoint+args (closed candles long-TTL, prices/trades short-TTL); **rate-limit** to stay under free-tier RPS. | Free-tier survival; one cache, not per-router (root domain rule). |
+| **Cache** read-through keyed by endpoint+args (closed candles long-TTL, prices/trades short-TTL); **rate-limit** through required shared Upstash Redis to stay under provider RPS. | Free-tier survival across one or many server instances; one cache, not per-router (root domain rule). |
 | Map upstream `429` → a tagged `RateLimitError`; non-2xx / Zod-parse failure → `UpstreamError`. Routers translate these to `RATE_LIMITED` / `UPSTREAM_ERROR`. | One error vocabulary at the edge → stable router codes. |
 | The client takes an injectable `fetch` (defaults to global). | Tests stub `fetch`/the client without touching the network. |
 
@@ -44,19 +44,16 @@ Each method validates the upstream payload with Zod and returns typed data or th
 ## Implementation (M1.2)
 
 `createBirdEyeClient(options?)` → the client; `birdeye` is the shared singleton routers import (one
-cache, one limiter, key from `@fomo/env/server`). Options (all optional): `fetch` (default global —
+Redis cache, one Redis limiter, key from `@fomo/env/server`). Options: `fetch` (default global —
 the test seam), `apiKey` (default `env.BIRDEYE_API_KEY`), `baseUrl`, `requestsPerSecond` (default **1** —
-the free Standard tier's per-account limit; raise on a paid plan: Lite/Starter 15, Premium 50),
-`cacheMax` (default 500). Routers `instanceof`-map `RateLimitError` / `UpstreamError` imported directly
+the free Standard tier's per-account limit; raise on a paid plan: Lite/Starter 15, Premium 50), plus
+`cache`/`limiter` test seams for offline method tests. Routers `instanceof`-map `RateLimitError` / `UpstreamError` imported directly
 from [`../_shared/errors`](../_shared/errors.ts), and import the view types from [`./schema`](./schema.ts)
 — `index.ts` exports no re-export barrel (the `noBarrelFile` lint rule forbids `export … from` here).
 
-**Cache + limiter — decision (Rule 16):** hand-rolled, **zero new deps** — a bounded-TTL `Map`
-(FIFO-evict at `cacheMax`) + a token-bucket limiter, now in [`_shared/`](../_shared/AGENTS.md) (cache /
-limiter / errors / parse, extracted on the 3rd integration). Rejected `lru-cache` / `p-throttle`: on Vercel
-serverless both are per-instance regardless (reset on cold start, no cross-instance coordination), so
-a dep buys little; a shared Upstash/Redis limit is the only true fleet-wide control and is out of M12
-scope. Add it if/when a fleet-wide limit is needed.
+**Cache + limiter — decision (Rule 16):** shared Upstash Redis is the required fleet-wide path
+(`@upstash/redis` + `@upstash/ratelimit`, HTTP/REST and serverless-safe). Rejected `lru-cache` /
+`p-throttle`: they are still per-instance on serverless and do not solve BirdEye account-wide limits.
 
 **Endpoints + per-method cache TTL** (response shapes captured from the live API into `__fixtures__/`):
 
@@ -80,7 +77,7 @@ carry no key).
 | `index.ts` | `createBirdEyeClient(opts)` (assembles the context, wires every method) + the `birdeye` singleton. No re-export barrel — consumers import errors from `_shared/errors`, view types from `schema.ts`. |
 | `context.ts` | `createContext(opts) → { request, cache }` + `BirdEyeClientOptions` — builds the limiter, requester, and cache **once** (one cache, one limiter shared by all methods). |
 | `request.ts` | the shared transport: rate-limit → `fetch` (key header) → status/JSON/envelope error mapping. |
-| [`_shared/`](../_shared/AGENTS.md) | `cache.ts` · `limiter.ts` · `errors.ts` · `parse.ts` — bounded TTL cache · token-bucket limiter · `RateLimitError`/`UpstreamError` · `parseData` (shared by every integration). |
+| [`_shared/`](../_shared/AGENTS.md) | `cache.ts` · `limiter.ts` · `redis.ts` · `errors.ts` · `parse.ts` — bounded/Redis TTL cache · token-bucket/Redis limiter · `RateLimitError`/`UpstreamError` · `parseData` (shared by every integration). |
 | `schema.ts` | **shared** view types (`TokenSummary`/`TokenDetail`/`Candle`/`Holder`/`Trade`) + `Envelope` + `TrendingSort`. Promote to `src/schemas/token.ts` once a 2nd module needs them. |
 | `methods/<name>.ts` | one method each — `makeX(ctx)` factory + its raw upstream schema + normalizer + TTL colocated. |
 | `__fixtures__/*.json` | real BirdEye payloads the method tests assert against. |

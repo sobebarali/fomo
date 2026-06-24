@@ -1,4 +1,3 @@
-import { ORPCError } from "@orpc/server";
 import { protectedProcedure } from "../../index";
 import {
   RateLimitError,
@@ -6,6 +5,7 @@ import {
 } from "../../integrations/_shared/errors";
 import { alchemy } from "../../integrations/alchemy";
 import { market } from "../../integrations/market";
+import { routerError } from "../_shared/errors";
 import { balancesOutput, positionInput, positionOutput } from "./schema";
 
 const WSOL = "So11111111111111111111111111111111111111112";
@@ -14,10 +14,10 @@ const WSOL = "So11111111111111111111111111111111111111112";
 // Re-throws anything not from the integration, so our own ORPCErrors pass through untouched.
 function mapUpstreamError(err: unknown): never {
   if (err instanceof RateLimitError) {
-    throw new ORPCError("RATE_LIMITED");
+    throw routerError("RATE_LIMITED");
   }
   if (err instanceof UpstreamError) {
-    throw new ORPCError("UPSTREAM_ERROR");
+    throw routerError("UPSTREAM_ERROR");
   }
   throw err;
 }
@@ -29,7 +29,7 @@ const balances = protectedProcedure
     const wallet = context.auth.walletAddress;
     if (!wallet) {
       // Degraded session or no embedded wallet: this procedure cannot read a portfolio.
-      throw new ORPCError("UNAUTHORIZED");
+      throw routerError("UNAUTHORIZED");
     }
 
     try {
@@ -82,7 +82,7 @@ const position = protectedProcedure
     const wallet = context.auth.walletAddress;
     if (!wallet) {
       // Degraded session or no embedded wallet: this procedure cannot read a portfolio.
-      throw new ORPCError("UNAUTHORIZED");
+      throw routerError("UNAUTHORIZED");
     }
 
     try {

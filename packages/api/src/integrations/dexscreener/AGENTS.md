@@ -1,12 +1,13 @@
 # `dexscreener` integration
 
 > Free, **keyless** client for **DexScreener** — token market data (price, 24h change/volume, liquidity,
-> market cap, logo, links). One of the free non-CU sources behind the [`market`](../market/AGENTS.md)
-> facade that replaced BirdEye for the public reads. Reference shape:
+> market cap, logo, links). One of the fallback sources behind the [`market`](../market/AGENTS.md)
+> facade when BirdEye detail reads are empty/rate-limited/down. Reference shape:
 > [`../birdeye/AGENTS.md`](../birdeye/AGENTS.md). Format/errors: [`../../AGENTS.md`](../../AGENTS.md).
 
 - **Base URL:** `https://api.dexscreener.com` (override `env.DEXSCREENER_BASE_URL`). **No API key.**
   **60 req/min** free limit → limiter defaults to 1 rps; the SWR cache is the real throttle.
+  Required shared Upstash Redis from `@fomo/env/server` backs cache and rate limits.
 
 ## Surface
 

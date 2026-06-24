@@ -7,7 +7,7 @@
 
 | Export | Owns |
 |--------|------|
-| `@fomo/env/server` | Server-only env: `DATABASE_URL`, `CORS_ORIGIN`, `NODE_ENV`, `BIRDEYE_API_KEY`, `ALCHEMY_RPC_URL`, `JUPITER_API_KEY`, `PRIVY_APP_SECRET`, and optional keyless base-URL overrides `DEXSCREENER_BASE_URL` / `GECKOTERMINAL_BASE_URL`. |
+| `@fomo/env/server` | Server-only env: `DATABASE_URL`, `CORS_ORIGIN`, `NODE_ENV`, `BIRDEYE_API_KEY`, `ALCHEMY_RPC_URL`, `JUPITER_API_KEY`, `PRIVY_APP_SECRET`, `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`, and optional keyless base-URL overrides `DEXSCREENER_BASE_URL` / `GECKOTERMINAL_BASE_URL`. |
 | `@fomo/env/web` | Client-safe, `NEXT_PUBLIC_*` only: `NEXT_PUBLIC_PRIVY_APP_ID`. |
 
 ## Conventions (Rule → Why)

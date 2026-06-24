@@ -1,8 +1,8 @@
 import { users } from "@fomo/db/schema";
-import { ORPCError } from "@orpc/server";
 import { eq, sql } from "drizzle-orm";
 
 import { protectedProcedure } from "../../index";
+import { routerError } from "../_shared/errors";
 import { userView } from "./schema";
 
 const me = protectedProcedure
@@ -15,7 +15,7 @@ const me = protectedProcedure
       .where(eq(users.privyId, context.auth.privyId));
 
     if (!user) {
-      throw new ORPCError("NOT_FOUND");
+      throw routerError("NOT_FOUND");
     }
 
     return {
@@ -48,7 +48,7 @@ const sync = protectedProcedure
       .returning();
 
     if (!user) {
-      throw new ORPCError("CONFLICT");
+      throw routerError("CONFLICT");
     }
 
     return {

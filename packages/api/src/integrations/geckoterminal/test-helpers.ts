@@ -1,4 +1,6 @@
 import { vi } from "vitest";
+import { createCache } from "../_shared/cache";
+import { createLimiter } from "../_shared/limiter";
 import { createGeckoTerminalClient } from "./index";
 
 /** Build a `Response` from a JSON body — the shape `fetch` hands back. */
@@ -17,8 +19,9 @@ export function makeClient(impl: FetchImpl) {
   const fetchMock = vi.fn(impl);
   const client = createGeckoTerminalClient({
     fetch: fetchMock as unknown as typeof fetch,
+    cache: createCache(100),
+    limiter: createLimiter(1000),
     requestsPerSecond: 1000,
-    cacheMax: 100,
   });
   return { client, fetchMock };
 }

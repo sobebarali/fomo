@@ -5,7 +5,7 @@ import type { BirdEyeContext } from "../context";
 import type { TokenSummary, TrendingSort } from "../schema";
 
 // 60s: "trending" shifts slowly and this list feeds the redirect, sidebar, and banners on every
-// /trade visit — a longer TTL keeps the persistent (Railway) in-memory cache warm and well under
+// /trade visit — a longer TTL keeps the shared Redis cache warm and well under
 // the free-tier RPS instead of re-hitting BirdEye per page load.
 const TTL = 60_000;
 

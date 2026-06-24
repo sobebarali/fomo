@@ -31,13 +31,13 @@ backs the supply DexScreener can't provide.
 ## Implementation (CET-215)
 
 `createAlchemyClient(options?)` → the client; `alchemy` is the shared singleton routers import (one
-cache, one limiter, URL from `@fomo/env/server`). Options (all optional): `fetch` (default global —
+Redis cache, one Redis limiter, URL from `@fomo/env/server`). Options: `fetch` (default global —
 the test seam), `rpcUrl` (default `env.ALCHEMY_RPC_URL`), `requestsPerSecond` (default **25** — the free
-tier's ~500 CU/s ceiling for our ~10-CU calls; raise on a paid plan), `cacheMax`
-(default 500). [`_shared/errors.ts`](../_shared/AGENTS.md) exports `RateLimitError` / `UpstreamError`
-for routers to `instanceof`-map; the `TokenBalance` view type lives in `schema.ts`.
+tier's ~500 CU/s ceiling for our ~10-CU calls; raise on a paid plan), plus `cache`/`limiter` test seams
+for offline method tests. [`_shared/errors.ts`](../_shared/AGENTS.md) exports `RateLimitError` /
+`UpstreamError` for routers to `instanceof`-map; the `TokenBalance` view type lives in `schema.ts`.
 
-Mirrors the **`birdeye/`** reference shape — cache / limiter / errors / parse are the provider-agnostic
+Mirrors the **`birdeye/`** reference shape — cache / limiter / Redis / errors / parse are the provider-agnostic
 [`_shared/`](../_shared/AGENTS.md) infra. The one real divergence: Alchemy is **JSON-RPC over POST**
 (key embedded in `rpcUrl`), so `request.ts` POSTs `{ jsonrpc, id, method, params }` and validates the
 `{ result?, error? }` envelope (`schema.ts` `RpcResponse`); each method then validates `result` with
@@ -57,7 +57,7 @@ Zod-parse failure → `UpstreamError` (messages carry no URL/key).
 - **Classic SPL Token program only** (`TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`) — pump.fun /
   memecoins are classic SPL. Token-2022 needs a 2nd `getTokenAccountsByOwner` call (the Token-2022
   program id) merged in; deferred (`// ponytail:` in `token-balances.ts`).
-- **Infra extracted to [`_shared/`](../_shared/AGENTS.md)** (cache/limiter/errors/parse) on the 3rd
+- **Infra extracted to [`_shared/`](../_shared/AGENTS.md)** (cache/limiter/Redis/errors/parse) on the 3rd
   integration (jupiter), as this note originally planned — birdeye + alchemy now import it.
 - **No `cache`/`limiter` unit tests** here — canonical copies live in `_shared/`.
 

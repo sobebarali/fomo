@@ -19,7 +19,7 @@ interface Trending {
 // Lives in the trade layout so it persists across token clicks; the active row is derived from the
 // URL (usePathname) rather than a prop, since the layout doesn't see the `[address]` param. Seeds from
 // the server result and goes live via the SSE `trending` channel (MarketStream writes ["trending"]);
-// no client polling.
+// slow client polling remains only as a fallback if the stream is unavailable.
 export function TrendingSidebar({ result }: { result: Loadable<Trending> }) {
   const pathname = usePathname();
   const activeAddress = pathname.split("/")[2] ?? "";
@@ -27,7 +27,7 @@ export function TrendingSidebar({ result }: { result: Loadable<Trending> }) {
     queryKey: ["trending"],
     queryFn: () => client.tokens.trending({ limit: 30, sort: "trending" }),
     initialData: result.data ?? undefined,
-    refetchInterval: 30_000,
+    refetchInterval: 120_000,
   });
   const items = live.data?.items ?? result.data?.items ?? null;
 

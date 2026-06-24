@@ -1,10 +1,10 @@
-import { ORPCError } from "@orpc/server";
 import { publicProcedure } from "../../index";
 import {
   RateLimitError,
   UpstreamError,
 } from "../../integrations/_shared/errors";
 import { market } from "../../integrations/market";
+import { routerError } from "../_shared/errors";
 import { candlesInput, candlesOutput } from "./schema";
 
 // Default range when from/to omitted: ~300 candles back from now, scaled per interval.
@@ -23,10 +23,10 @@ const DEFAULT_CANDLES = 300;
 // Re-throws anything not from the integration (e.g. a NOT_FOUND we raised), never leaking a raw 500.
 function mapUpstreamError(err: unknown): never {
   if (err instanceof RateLimitError) {
-    throw new ORPCError("RATE_LIMITED");
+    throw routerError("RATE_LIMITED");
   }
   if (err instanceof UpstreamError) {
-    throw new ORPCError("UPSTREAM_ERROR");
+    throw routerError("UPSTREAM_ERROR");
   }
   throw err;
 }
@@ -45,7 +45,7 @@ const candles = publicProcedure
     const from =
       input.from ?? to - INTERVAL_SECONDS[input.interval] * DEFAULT_CANDLES;
     if (from > to) {
-      throw new ORPCError("BAD_REQUEST");
+      throw routerError("BAD_REQUEST");
     }
     try {
       const series = await market.ohlcv({
@@ -55,7 +55,7 @@ const candles = publicProcedure
         to,
       });
       if (series.length === 0) {
-        throw new ORPCError("NOT_FOUND");
+        throw routerError("NOT_FOUND");
       }
       const sorted = [...series].sort((a, b) => a.time - b.time);
       return { candles: sorted };

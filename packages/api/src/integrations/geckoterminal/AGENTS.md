@@ -1,14 +1,15 @@
 # `geckoterminal` integration
 
 > Free, **keyless** client for **GeckoTerminal** (CoinGecko's on-chain DEX API) — organic trending,
-> OHLCV candles, and recent trades. One of the free non-CU sources behind the
-> [`market`](../market/AGENTS.md) facade that replaced BirdEye. Reference shape:
+> OHLCV candles, and recent trades. One of the fallback sources behind the
+> [`market`](../market/AGENTS.md) facade when BirdEye is empty/rate-limited/down. Reference shape:
 > [`../birdeye/AGENTS.md`](../birdeye/AGENTS.md). Format/errors: [`../../AGENTS.md`](../../AGENTS.md).
 
 - **Base URL:** `https://api.geckoterminal.com/api/v2` (override `env.GECKOTERMINAL_BASE_URL`). **No
   key.** Pins its response shape behind the `Accept: application/json;version=20230302` header.
 - **~30 req/min** free limit (the tightest of all sources) → limiter defaults to **0.4 rps**; the SWR
-  cache + the single background poller are the real throttle.
+  cache + the single background poller are the real throttle. Required shared Upstash Redis from
+  `@fomo/env/server` backs cache and rate limits.
 
 ## Surface
 

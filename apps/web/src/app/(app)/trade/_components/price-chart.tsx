@@ -2,14 +2,8 @@
 
 import { cn } from "@fomo/ui/lib/utils";
 import { useQuery } from "@tanstack/react-query";
-import {
-  AreaSeries,
-  createChart,
-  type IChartApi,
-  type ISeriesApi,
-  type UTCTimestamp,
-} from "lightweight-charts";
-import { useEffect, useRef, useState } from "react";
+import dynamic from "next/dynamic";
+import { useEffect, useState } from "react";
 
 import { client } from "@/utils/orpc";
 import { errorCopy } from "./format";
@@ -20,19 +14,34 @@ type Interval = "1m" | "5m" | "15m" | "1H" | "4H" | "1D" | "1W";
 
 const RANGE_TABS: Range[] = ["LIVE", "1D", "1W", "1M", "1Y", "MAX"];
 const DEFAULT_RANGE: Range = "1D";
-const LINE_COLOR = "#16e27b";
+const AreaCanvas = dynamic(
+  () => import("./price-chart-canvas").then((mod) => mod.AreaCanvas),
+  {
+    loading: () => <ChartSkeleton />,
+    ssr: false,
+  }
+);
 
 const RANGE_CONFIG: Record<
   Range,
   { interval: Interval; lookbackSeconds?: number; pollMs?: number }
 > = {
   // Only LIVE polls; the other ranges are historical and refresh on navigation/range change.
-  LIVE: { interval: "1m", lookbackSeconds: 10_800, pollMs: 20_000 },
+  LIVE: { interval: "1m", lookbackSeconds: 10_800, pollMs: 30_000 },
   "1D": { interval: "15m" },
   "1W": { interval: "1H", lookbackSeconds: 604_800 },
   "1M": { interval: "4H", lookbackSeconds: 2_592_000 },
   "1Y": { interval: "1D", lookbackSeconds: 31_536_000 },
   MAX: { interval: "1W" },
+};
+const INTERVAL_SECONDS: Record<Interval, number> = {
+  "1m": 60,
+  "5m": 300,
+  "15m": 900,
+  "1H": 3600,
+  "4H": 14_400,
+  "1D": 86_400,
+  "1W": 604_800,
 };
 
 function queryErrorCode(error: unknown): string {
@@ -53,14 +62,17 @@ export function PriceChart({ address }: { address: string }) {
   const config = RANGE_CONFIG[range];
   const query = useQuery({
     enabled: ready,
-    queryFn: () =>
-      client.chart.candles({
+    queryFn: () => {
+      const intervalSeconds = INTERVAL_SECONDS[config.interval];
+      const to =
+        Math.floor(Date.now() / 1000 / intervalSeconds) * intervalSeconds;
+      return client.chart.candles({
         address,
-        from: config.lookbackSeconds
-          ? Math.floor(Date.now() / 1000) - config.lookbackSeconds
-          : undefined,
+        from: config.lookbackSeconds ? to - config.lookbackSeconds : undefined,
         interval: config.interval,
-      }),
+        to,
+      });
+    },
     queryKey: ["chart-candles", address, range],
     refetchInterval: ready && config.pollMs ? config.pollMs : false,
   });
@@ -131,72 +143,6 @@ function renderChartArea({
 
 function ChartSkeleton() {
   return <div className="h-[18rem] w-full animate-pulse bg-[#101617]" />;
-}
-
-function AreaCanvas({ points }: { points: Candle[] }) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const chartRef = useRef<IChartApi | null>(null);
-  const seriesRef = useRef<ISeriesApi<"Area"> | null>(null);
-
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el) {
-      return;
-    }
-    const chart = createChart(el, {
-      autoSize: true,
-      crosshair: {
-        horzLine: { labelVisible: false, visible: false },
-        vertLine: { labelVisible: false },
-      },
-      grid: {
-        horzLines: { visible: false },
-        vertLines: { visible: false },
-      },
-      handleScale: false,
-      handleScroll: false,
-      layout: {
-        attributionLogo: false,
-        background: { color: "#0b0f10" },
-        textColor: "#7d8b86",
-      },
-      leftPriceScale: { visible: false },
-      rightPriceScale: { visible: false },
-      timeScale: { borderVisible: false, visible: false },
-    });
-    const series = chart.addSeries(AreaSeries, {
-      bottomColor: "rgba(22, 226, 123, 0)",
-      lastValueVisible: false,
-      lineColor: LINE_COLOR,
-      lineWidth: 2,
-      priceLineVisible: false,
-      topColor: "rgba(22, 226, 123, 0.2)",
-    });
-    chartRef.current = chart;
-    seriesRef.current = series;
-    return () => {
-      chart.remove();
-      chartRef.current = null;
-      seriesRef.current = null;
-    };
-  }, []);
-
-  useEffect(() => {
-    const chart = chartRef.current;
-    const series = seriesRef.current;
-    if (!(chart && series)) {
-      return;
-    }
-    series.setData(
-      points.map((candle) => ({
-        time: candle.time as UTCTimestamp,
-        value: candle.close,
-      }))
-    );
-    chart.timeScale().fitContent();
-  }, [points]);
-
-  return <div className="h-[18rem] w-full" ref={containerRef} />;
 }
 
 function ChartPlaceholder({

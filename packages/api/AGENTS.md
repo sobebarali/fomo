@@ -27,7 +27,8 @@ A router module's `AGENTS.md` documents each procedure as:
 
 ## Error taxonomy
 
-Declare on the procedure (`.errors({...})`) and throw `new ORPCError("CODE")`. Tests assert the code.
+Declare on the procedure (`.errors({...})`) and throw `routerError("CODE")` from
+`src/routers/_shared/errors.ts` so the HTTP status matches the taxonomy. Tests assert the code.
 
 | Code | When |
 |------|------|
@@ -46,6 +47,7 @@ Declare on the procedure (`.errors({...})`) and throw `new ORPCError("CODE")`. T
 2. **Validate at the boundary** — `.input(zodSchema)` on every procedure with args; secrets stay server-side.
 3. **External reads go through `src/integrations/*`** (cached + rate-limited there), never `fetch` inline.
 4. **Cursor pagination** for lists — one helper in `src/routers/_shared/` (added with the first list router).
+5. **Taxonomy errors** via `routerError(...)` — never raw `new ORPCError(...)` in routers.
 
 ## Conventions (Rule → Why)
 

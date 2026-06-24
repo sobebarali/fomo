@@ -8,21 +8,29 @@ import { toast } from "sonner";
 
 // Third-party APIs (BirdEye/Alchemy/Jupiter) surface a 429 as a `RATE_LIMITED` oRPC error.
 function isRateLimited(error: unknown): boolean {
-  if (typeof error !== "object" || error === null || !("code" in error)) {
+  if (typeof error !== "object" || error === null) {
     return false;
   }
-  return error.code === "RATE_LIMITED";
+  const maybeError = error as {
+    code?: unknown;
+    data?: { code?: unknown };
+    status?: unknown;
+  };
+  return (
+    maybeError.code === "RATE_LIMITED" ||
+    maybeError.data?.code === "RATE_LIMITED" ||
+    maybeError.status === 429
+  );
 }
 
 export function createQueryClient() {
   return new QueryClient({
     defaultOptions: {
       queries: {
-        // Keep refetching through rate limits (backoff capped at 30s) so the UI fills in once the
-        // limit clears, instead of dead-ending on an error. Any other error still fails fast.
-        // ponytail: retries RATE_LIMITED indefinitely — a permanently-429ing key just polls every
-        // 30s. Swap in a finite failureCount cap if that ever becomes a problem.
-        retry: (_failureCount, error) => isRateLimited(error),
+        // Retry short provider rate-limit bursts, but don't keep a permanently-limited key polling
+        // forever in the background.
+        retry: (failureCount, error) =>
+          failureCount < 5 && isRateLimited(error),
         retryDelay: (attemptIndex) =>
           Math.min(1000 * 2 ** attemptIndex, 30_000),
         // BirdEye free tier is a tiny CU budget, so spend it only on real navigation: no polling

@@ -33,11 +33,11 @@ signed tx via `POST /swap/v2/execute` is the swap router's job — out of scope 
 ## Implementation (CET-216)
 
 `createJupiterClient(options?)` → the client; `jupiter` is the shared singleton routers import (one
-cache, one limiter, key from `@fomo/env/server`). Options (all optional): `fetch` (default global —
+Redis cache, one Redis limiter, key from `@fomo/env/server`). Options: `fetch` (default global —
 the test seam), `apiKey` (default `env.JUPITER_API_KEY`; omit for the keyless tier), `baseUrl`,
-`requestsPerSecond` (default **1** — the Free plan's per-account limit; **0.5** keyless, **10** paid Developer),
-`cacheMax` (default 500). Infra
-(cache/limiter/errors/parse) comes from [`../_shared/`](../_shared/AGENTS.md).
+`requestsPerSecond` (default **1** — the Free plan's per-account limit; **0.5** keyless, **10** paid
+Developer), plus `cache`/`limiter` test seams for offline method tests. Infra
+(cache/limiter/Redis/errors/parse) comes from [`../_shared/`](../_shared/AGENTS.md).
 
 **Decisions (Rule 16):**
 - **Swap V2, not V1/Metis** — Jupiter's docs flag V1 as deprecated/superseded. V2 fuses quote + build
@@ -68,7 +68,7 @@ order `errorCode` → `BadRequestError(errorMessage)` (→ `BAD_REQUEST`, surfac
 | `schema.ts` | view types `Quote` / `RoutePlanStep` / `SwapTxResult` + the lenient raw `OrderResponse` Zod schema (both methods parse it). |
 | `methods/quote.ts` · `methods/swap-transaction.ts` | one method each — `makeX(ctx)` factory + normalizer + TTL colocated. |
 | `__fixtures__/order-quote.json` · `order-tx.json` | real `GET /swap/v2/order` payloads (no-taker / with-taker) the method tests assert against. |
-| `../_shared/` | `cache.ts` · `limiter.ts` · `errors.ts` · `parse.ts` — provider-agnostic infra shared by every integration. |
+| `../_shared/` | `cache.ts` · `limiter.ts` · `redis.ts` · `errors.ts` · `parse.ts` — provider-agnostic infra shared by every integration. |
 
 ## Testing
 

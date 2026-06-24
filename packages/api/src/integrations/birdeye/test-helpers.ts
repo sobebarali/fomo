@@ -1,4 +1,6 @@
 import { vi } from "vitest";
+import { createCache } from "../_shared/cache";
+import { createLimiter } from "../_shared/limiter";
 import { createBirdEyeClient } from "./index";
 
 /** Build a `Response` from a JSON body — the shape `fetch` hands back. */
@@ -18,8 +20,9 @@ export function makeClient(impl: FetchImpl, apiKey = "test-key") {
   const client = createBirdEyeClient({
     fetch: fetchMock as unknown as typeof fetch,
     apiKey,
+    cache: createCache(100),
+    limiter: createLimiter(1000),
     requestsPerSecond: 1000,
-    cacheMax: 100,
   });
   return { client, fetchMock };
 }

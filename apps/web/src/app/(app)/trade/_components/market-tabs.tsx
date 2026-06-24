@@ -39,14 +39,14 @@ export function MarketTabs({
     enabled: active === "trades" && mounted,
     queryFn: () => client.trades.recent({ address, limit: 30 }),
     queryKey: ["trades", address],
-    refetchInterval: active === "trades" && mounted ? 10_000 : false,
+    refetchInterval: active === "trades" && mounted ? 60_000 : false,
   });
 
   const holders = useQuery({
     enabled: active === "holders" && mounted,
     queryFn: () => client.holders.list({ address, limit: 20 }),
     queryKey: ["holders", address],
-    refetchInterval: active === "holders" && mounted ? 60_000 : false,
+    refetchInterval: active === "holders" && mounted ? 120_000 : false,
   });
 
   const tabs: { label: string; value: Tab }[] =

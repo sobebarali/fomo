@@ -21,7 +21,7 @@ function useLiveToken(
     queryKey: ["token", address],
     queryFn: () => client.tokens.get({ address }),
     initialData: initialToken,
-    refetchInterval: 15_000,
+    refetchInterval: 60_000,
   });
   return query.data ?? initialToken;
 }

@@ -32,24 +32,24 @@
 ## Data + boundaries
 
 > **Live: poll baseline + SSE accelerator, free sources.** Reads come from **free, non-CU** providers
-> (the [`market`](../../../../../packages/api/src/integrations/market/AGENTS.md) facade: DexScreener /
-> GeckoTerminal / Alchemy). Client islands **poll** for live updates — the reliable path — and a
-> server-side SSE fan-out updates them faster *when it flushes*. The poller (`src/server/market-poller.ts`,
+> (the [`market`](../../../../../packages/api/src/integrations/market/AGENTS.md) facade: BirdEye first,
+> then GeckoTerminal / DexScreener / Alchemy fallbacks). Client islands are **SSE-first** for live
+> updates with slower polling as a fallback. The poller (`src/server/market-poller.ts`,
 > started from `instrumentation.ts`) refreshes trending + the active token's token/trades and pushes over
 > **SSE** (`/api/stream`, hub `src/server/sse-hub.ts`); one client `EventSource` (`MarketStream`, mounted in
 > the trade layout) writes each push into the TanStack cache. **Railway's edge proxy buffers SSE
 > intermittently** (a 2KB padding comment + `x-accel-buffering: no` help but aren't fully reliable), so
-> the per-island poll is the guaranteed source and SSE is best-effort. Either way it's rate-safe: the
-> server's stale-while-revalidate cache (one process singleton) dedups upstream to ~1 per TTL per key
+> each streamed surface keeps a slow poll as the recovery path. Either way it's rate-safe: the
+> server's required Redis stale-while-revalidate cache dedups upstream to ~1 per TTL per key
 > regardless of client count. Global TanStack defaults (`utils/orpc.ts`): `refetchOnWindowFocus: false`,
-> `staleTime` 5min.
+> `staleTime` 5min and finite `RATE_LIMITED` retries with capped backoff.
 
 | Concern | Source | Boundary |
 |---------|--------|----------|
-| Trending list + top/bottom banners | `tokens.trending` | server-seeded in `layout.tsx`; `TrendingSidebar` + `LiveTokenBanner` share the `["trending"]` query (poll 30s + SSE) |
-| Token header / stats | `tokens.get` | server-rendered blocking read (fast nav); `token-live.tsx` wrappers seed from it, poll 15s + SSE (`["token", address]`) |
-| Chart render + range-tab refetch | `chart.candles` | client island (`lightweight-charts` area series); self-fetches per range, `LIVE` polls 20s (not on SSE) |
-| Holders + trades + tab state | `holders.list` / `trades.recent` | client islands; fetch on tab activation with a skeleton. Trades poll 10s + SSE (`["trades", address]`); holders poll 60s (not on SSE) |
+| Trending list + top/bottom banners | `tokens.trending` | server-seeded in `layout.tsx`; `TrendingSidebar` + `LiveTokenBanner` share the `["trending"]` query (SSE + 120s fallback poll) |
+| Token header / stats | `tokens.get` | server-rendered blocking read (fast nav); `token-live.tsx` wrappers seed from it, SSE + 60s fallback poll (`["token", address]`) |
+| Chart render + range-tab refetch | `chart.candles` | client island; self-fetches per range with interval-rounded windows, dynamically loads `lightweight-charts`, `LIVE` polls 30s (not on SSE) |
+| Holders + trades + tab state | `holders.list` / `trades.recent` | client islands; fetch on tab activation with a skeleton. Trades use SSE + 60s fallback poll (`["trades", address]`); holders poll 120s (not on SSE) |
 | Position | `portfolio.position` | protected client island; polls 20s after Privy auth (per-user, not on SSE) |
 | Buy/sell quote + build/sign/send | `swap.quote` → `swap.buildTransaction` → Privy Solana wallet | client island; quote first, confirm before signing; buy input accepts human SOL and converts to lamports before calling `swap` |
 
@@ -59,10 +59,10 @@
 |------|------|
 | Static market reads render in RSC; only wallet, polling, and tab interactivity are client islands. | Secrets stay server-side; smaller bundle. |
 | `tokens.get` `BAD_REQUEST`/`NOT_FOUND` calls `notFound()`; rate-limit/upstream failures render scoped empty/error panels. | Invalid routes are 404s; provider failures never become fake market data. |
-| CET-229 ships the `lightweight-charts` area island (`price-chart.tsx`) with functional `LIVE/1D/1W/1M/1Y/MAX` tabs fed by `chart.candles`; `ChartPanel` (RSC) just mounts `<PriceChart address>`, which self-fetches per range with a skeleton (no server seed). | Real chart on the Penpot design; the canvas + tab interactivity must be a client island, and streaming keeps navigation off the chart fetch. |
+| CET-229 ships the `lightweight-charts` area island (`price-chart.tsx` + lazy `price-chart-canvas.tsx`) with functional `LIVE/1D/1W/1M/1Y/MAX` tabs fed by `chart.candles`; `ChartPanel` (RSC) just mounts `<PriceChart address>`, which self-fetches per range with a skeleton (no server seed). | Real chart on the Penpot design; the canvas + tab interactivity must be a client island, and the heavy chart library stays out of the initial trade shell. |
 | The swap flow sends base-unit string amounts to `swap`, default `50` bps slippage, quote before build, confirmation before Privy signing/sending. Buy UI accepts human SOL (for example `0.0001`) and converts to lamports client-side; sell UI stays token base units until token decimals are available. | Preserves Jupiter amount integrity and user consent; the server never signs. |
 | Position P/L remains neutral when cost basis is unknown (`null` from `portfolio.position`). | Real-data rule: no fabricated cost basis or P/L. |
-| `RATE_LIMITED` (provider 429) auto-recovers: the global TanStack `retry` (`utils/orpc.ts`) retries it with capped backoff and no toast; SSE-fed surfaces self-heal on the next poll push. `loading.tsx` is the fallback for the layout's content slot, so the chrome stays put while the token content spins. (The old `RateLimitRefresher` `router.refresh()` island was retired once SSE landed.) | Free-tier limits are transient; the UI fills in once they clear instead of dead-ending. |
+| `RATE_LIMITED` (provider 429) auto-recovers: the global TanStack `retry` (`utils/orpc.ts`) retries it a finite number of times with capped backoff and no toast; SSE-fed surfaces self-heal on the next poll push. `loading.tsx` is the fallback for the layout's content slot, so the chrome stays put while the token content spins. (The old `RateLimitRefresher` `router.refresh()` island was retired once SSE landed.) | Free-tier limits are transient; the UI fills in once they clear without polling forever. |
 
 ## Decisions
 
@@ -72,7 +72,7 @@
   design is a green area/line sparkline (line `#16e27b`, translucent fill), so the island feeds each
   candle's `close` into an `AreaSeries` (grid/axes hidden, `autoSize`). `lightweight-charts` is
   TradingView's OSS package — satisfies the "TradingView charting library" requirement with no gated
-  datafeed adapter. Range tabs map to the router's `interval`/`from`: `LIVE`→`1m`/3h (polls 15s),
+  datafeed adapter. Range tabs map to the router's `interval`/`from`: `LIVE`→`1m`/3h (polls 30s),
   `1D`→`15m`/server-default (matches the seed), `1W`→`1H`/7d, `1M`→`4H`/30d, `1Y`→`1D`/365d,
   `MAX`→`1W`/server-default. The client canvas island has no integration test (interactivity islands
   are client-only); the `chart.candles` contract is covered by `chart.integration.test.ts`.
