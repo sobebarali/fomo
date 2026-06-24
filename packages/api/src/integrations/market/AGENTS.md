@@ -12,8 +12,8 @@
 |--------|---------|----------|
 | `trending({ sort, limit, offset })` | [`birdeye`](../birdeye/AGENTS.md) | [`geckoterminal`](../geckoterminal/AGENTS.md) organic trending pools |
 | `token({ address })` | `birdeye` token overview | [`dexscreener`](../dexscreener/AGENTS.md) token pairs + [`alchemy`](../alchemy/AGENTS.md) `getTokenSupply` |
-| `ohlcv({ address, interval, from, to })` | `birdeye` OHLCV | `geckoterminal` resolve pool → OHLCV |
-| `trades({ address, limit })` | `birdeye` token swaps | `geckoterminal` resolve pool → pool trades |
+| `ohlcv({ address, interval, from, to })` | `birdeye` OHLCV | `geckoterminal` resolve pool → OHLCV, hedged after 1.2s |
+| `trades({ address, limit })` | `birdeye` token swaps | `geckoterminal` resolve pool → pool trades, hedged after 1.2s |
 | `holders({ address, limit })` | `birdeye` holders | `alchemy` largest accounts → owners |
 
 `createMarketClient(deps?)` takes injectable `{ birdeye, dexscreener, geckoterminal, alchemy }`
@@ -24,6 +24,7 @@
 | Rule | Why |
 |------|------|
 | BirdEye is tried first for every market surface; `RateLimitError` / `UpstreamError` / empty reads cascade to the free fallback source. | Keeps the product aligned with `TASK.md` while preserving graceful degradation if BirdEye quota/provider health regresses. |
+| `ohlcv` and `trades` start the GeckoTerminal fallback if BirdEye has not returned within 1.2s; the first non-error provider result wins. | These are the slow visible panels on token navigation, so they need a latency hedge while still preserving BirdEye as the primary provider. |
 | The `token` fallback runs DexScreener + Alchemy `getTokenSupply` in parallel; a supply failure degrades `totalSupply` to `0` (never fails the read). | Supply is enrichment; the price/header is the critical path. |
 | Errors are the sub-clients' `_shared` `RateLimitError`/`UpstreamError` — no new vocabulary. | Routers' `instanceof` mapping (`RATE_LIMITED`/`UPSTREAM_ERROR`) is unchanged. |
 

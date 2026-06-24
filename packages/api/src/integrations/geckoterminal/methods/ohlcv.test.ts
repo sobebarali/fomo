@@ -48,6 +48,25 @@ it("resolves the highest-reserve base pool and maps ohlcv_list to ascending Cand
     .find((u) => u.includes("/ohlcv/"));
   expect(ohlcvUrl).toContain(`/pools/${TOP_POOL}/ohlcv/minute`);
   expect(ohlcvUrl).toContain("aggregate=15");
+  expect(ohlcvUrl).toContain("limit=1000");
+});
+
+it("sizes short-window ohlcv requests to the requested candle count", async () => {
+  const { client, fetchMock } = makeClient((url) =>
+    Promise.resolve(route(url))
+  );
+
+  await client.ohlcv({
+    address: BONK,
+    interval: "15m",
+    from: 1_782_114_300,
+    to: 1_782_200_700,
+  });
+
+  const ohlcvUrl = fetchMock.mock.calls
+    .map((call) => String(call[0]))
+    .find((u) => u.includes("/ohlcv/"));
+  expect(ohlcvUrl).toContain("limit=97");
 });
 
 it("returns an empty series when the token has no pool", async () => {

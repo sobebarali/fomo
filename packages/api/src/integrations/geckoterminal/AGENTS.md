@@ -22,8 +22,10 @@
 `resolve-pool.ts` (internal, `pool:{address}` cached 10min) maps a token → its primary pool
 (highest `reserve_in_usd`, preferring pools where the token is the **base** so price/side read from
 its POV); `ohlcv` + `trades` share that one resolve. Interval map: `1m→minute/1, 5m→minute/5,
-15m→minute/15, 1H→hour/1, 4H→hour/4, 1D→day/1, 1W→day/7`. Trade `kind` → `side`; a buy reads the
-`to` side, a sell the `from` side.
+15m→minute/15, 1H→hour/1, 4H→hour/4, 1D→day/1, 1W→day/7`. OHLCV `limit` is derived from the
+requested `{ from, to, interval }` window and capped at GeckoTerminal's 1000-candle maximum, so a
+24h/15m request asks for ~1 day of candles instead of the max page. Trade `kind` → `side`; a buy
+reads the `to` side, a sell the `from` side.
 
 ## Conventions (Rule → Why)
 
@@ -36,7 +38,8 @@ its POV); `ohlcv` + `trades` share that one resolve. Interval map: `1m→minute/
 ## Degradations (free-tier honest gaps)
 
 - `trending` is **organic-only** (~20 pools/page); `gainers`/`new` sorts reuse the same list (the
-  sidebar's sort tabs aren't wired). OHLCV is capped at 1000 candles, so very long `1Y`/`MAX` ranges
+  sidebar's sort tabs aren't wired). OHLCV requests are sized to the requested range and capped at
+  1000 candles, so very long `1Y`/`MAX` ranges
   may be partial (the chart island handles short/empty series). No pool for a token → empty series /
   trades (router → `NOT_FOUND` for chart).
 

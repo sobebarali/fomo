@@ -5,7 +5,7 @@ import type { GeckoTerminalContext } from "../context";
 import { resolvePool } from "./resolve-pool";
 
 const TTL = 300_000;
-const DEFAULT_LIMIT = 1000; // GeckoTerminal's max candles per request.
+const MAX_LIMIT = 1000; // GeckoTerminal's max candles per request.
 
 // Router interval → GeckoTerminal (timeframe, aggregate).
 const TIMEFRAME: Record<string, { aggregate: number; timeframe: string }> = {
@@ -18,6 +18,16 @@ const TIMEFRAME: Record<string, { aggregate: number; timeframe: string }> = {
   "1W": { timeframe: "day", aggregate: 7 },
 };
 const FALLBACK_TIMEFRAME = { timeframe: "minute", aggregate: 15 };
+const FALLBACK_INTERVAL_SECONDS = 900;
+const INTERVAL_SECONDS: Record<string, number> = {
+  "1m": 60,
+  "5m": 300,
+  "15m": 900,
+  "1H": 3600,
+  "4H": 14_400,
+  "1D": 86_400,
+  "1W": 604_800,
+};
 
 // ohlcv_list rows are [timestamp, open, high, low, close, volume].
 const OhlcvResponse = z.object({
@@ -50,6 +60,23 @@ function toCandles(raw: z.infer<typeof OhlcvResponse>): Candle[] {
   );
 }
 
+function candleLimit({
+  from,
+  interval,
+  to,
+}: Pick<OhlcvInput, "from" | "interval" | "to">): number {
+  const intervalSeconds =
+    INTERVAL_SECONDS[interval] ?? FALLBACK_INTERVAL_SECONDS;
+  const span = to - from;
+  if (!(span > 0)) {
+    return MAX_LIMIT;
+  }
+  return Math.min(
+    MAX_LIMIT,
+    Math.max(1, Math.ceil(span / intervalSeconds) + 1)
+  );
+}
+
 export interface OhlcvInput {
   address: string;
   from: number;
@@ -74,11 +101,13 @@ export function makeOhlcv(ctx: GeckoTerminalContext) {
           {
             aggregate: tf.aggregate,
             before_timestamp: to,
-            limit: DEFAULT_LIMIT,
+            limit: candleLimit({ from, interval, to }),
             currency: "usd",
           }
         );
-        return toCandles(parseData(OhlcvResponse, body));
+        return toCandles(parseData(OhlcvResponse, body)).filter(
+          (candle) => candle.time >= from && candle.time <= to
+        );
       }
     );
 }

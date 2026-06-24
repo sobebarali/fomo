@@ -62,6 +62,7 @@ const DEFAULT_DEPS: MarketDeps = {
   dexscreener,
   geckoterminal,
 };
+const HEDGE_DELAY_MS = 1200;
 
 function isProviderFailure(err: unknown): boolean {
   return err instanceof RateLimitError || err instanceof UpstreamError;
@@ -97,6 +98,60 @@ async function cascadeArray<T>(
   return result.length > 0 ? result : fallback();
 }
 
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
+
+async function hedgedArray<T>(
+  primary: () => Promise<T[]>,
+  fallback: () => Promise<T[]>
+): Promise<T[]> {
+  const primaryPromise = primary();
+  let fallbackPromise: Promise<T[]> | null = null;
+  const runFallback = () => {
+    fallbackPromise ??= fallback();
+    return fallbackPromise;
+  };
+  const first = await Promise.race([
+    primaryPromise.then(
+      (value) => ({ source: "primary" as const, value }),
+      (error: unknown) => ({ error, source: "primary" as const })
+    ),
+    delay(HEDGE_DELAY_MS)
+      .then(runFallback)
+      .then(
+        (value) => ({ source: "fallback" as const, value }),
+        (error: unknown) => ({ error, source: "fallback" as const })
+      ),
+  ]);
+
+  if ("value" in first) {
+    if (first.value.length > 0 || first.source === "fallback") {
+      return first.value;
+    }
+    return runFallback();
+  }
+
+  if (first.source === "primary") {
+    if (isProviderFailure(first.error)) {
+      return runFallback();
+    }
+    throw first.error;
+  }
+
+  try {
+    const primaryResult = await primaryPromise;
+    if (primaryResult.length > 0) {
+      return primaryResult;
+    }
+    throw first.error;
+  } catch {
+    throw first.error;
+  }
+}
+
 /** Compose market-data sources into one client:
  *  - BirdEye is primary for token, trending, OHLCV, trades, and holders
  *  - keyless/free sources cascade when BirdEye is rate-limited, down, or empty */
@@ -119,12 +174,12 @@ export function createMarketClient(
         () => deps.geckoterminal.trending(input)
       ),
     ohlcv: (input) =>
-      cascadeArray(
+      hedgedArray(
         () => deps.birdeye.ohlcv(input),
         () => deps.geckoterminal.ohlcv(input)
       ),
     trades: (input) =>
-      cascadeArray(
+      hedgedArray(
         () => deps.birdeye.trades(input),
         () => deps.geckoterminal.trades(input)
       ),

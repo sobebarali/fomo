@@ -14,6 +14,7 @@ type Interval = "1m" | "5m" | "15m" | "1H" | "4H" | "1D" | "1W";
 
 const RANGE_TABS: Range[] = ["LIVE", "1D", "1W", "1M", "1Y", "MAX"];
 const DEFAULT_RANGE: Range = "1D";
+const SLOW_PANEL_MS = 4000;
 const AreaCanvas = dynamic(
   () => import("./price-chart-canvas").then((mod) => mod.AreaCanvas),
   {
@@ -54,6 +55,7 @@ function queryErrorCode(error: unknown): string {
 export function PriceChart({ address }: { address: string }) {
   const [range, setRange] = useState<Range>(DEFAULT_RANGE);
   const [ready, setReady] = useState(false);
+  const [showSyncing, setShowSyncing] = useState(false);
 
   useEffect(() => {
     setReady(true);
@@ -78,6 +80,17 @@ export function PriceChart({ address }: { address: string }) {
   });
 
   const points = query.data?.candles ?? [];
+
+  useEffect(() => {
+    setShowSyncing(false);
+    if (!(ready && query.isFetching && points.length === 0)) {
+      return;
+    }
+    const timeout = setTimeout(() => {
+      setShowSyncing(true);
+    }, SLOW_PANEL_MS);
+    return () => clearTimeout(timeout);
+  }, [address, points.length, query.isFetching, range, ready]);
 
   return (
     <div>
@@ -108,7 +121,12 @@ export function PriceChart({ address }: { address: string }) {
         renderChartArea({
           points,
           isError: query.isError,
+          isFetching: query.isFetching,
           isLoading: query.isLoading,
+          isSyncing: showSyncing,
+          onRetry: () => {
+            query.refetch().catch(() => undefined);
+          },
           query,
         })
       ) : (
@@ -121,12 +139,18 @@ export function PriceChart({ address }: { address: string }) {
 function renderChartArea({
   points,
   isError,
+  isFetching,
   isLoading,
+  isSyncing,
+  onRetry,
   query,
 }: {
   points: Candle[];
   isError: boolean;
+  isFetching: boolean;
   isLoading: boolean;
+  isSyncing: boolean;
+  onRetry: () => void;
   query: { error: unknown };
 }) {
   if (points.length > 0) {
@@ -135,7 +159,10 @@ function renderChartArea({
   if (isError) {
     return <ChartPlaceholder code={queryErrorCode(query.error)} tone="error" />;
   }
-  if (isLoading) {
+  if (isSyncing) {
+    return <ChartPlaceholder code={null} onRetry={onRetry} tone="syncing" />;
+  }
+  if (isLoading || isFetching) {
     return <ChartSkeleton />;
   }
   return <ChartPlaceholder code={null} tone="empty" />;
@@ -147,23 +174,39 @@ function ChartSkeleton() {
 
 function ChartPlaceholder({
   code,
+  onRetry,
   tone,
 }: {
   code: string | null;
-  tone: "error" | "empty";
+  onRetry?: () => void;
+  tone: "error" | "empty" | "syncing";
 }) {
+  let message = "No price history returned for this token.";
+  if (tone === "error") {
+    message = errorCopy(code);
+  } else if (tone === "syncing") {
+    message = "Syncing chart data.";
+  }
+
   return (
     <div
       className={cn(
-        "flex h-[18rem] items-center justify-center border p-4 text-center text-sm",
+        "flex h-[18rem] flex-col items-center justify-center gap-3 border p-4 text-center text-sm",
         tone === "error"
           ? "border-[#f6465d]/30 bg-[#f6465d]/5 text-[#ffb4bf]"
           : "border-white/10 bg-[#101617] text-[#7d8b86]"
       )}
     >
-      {tone === "error"
-        ? errorCopy(code)
-        : "No price history returned for this token."}
+      {message}
+      {onRetry ? (
+        <button
+          className="border border-white/10 px-3 py-2 font-medium text-[#16e27b] text-xs"
+          onClick={onRetry}
+          type="button"
+        >
+          Retry
+        </button>
+      ) : null}
     </div>
   );
 }
