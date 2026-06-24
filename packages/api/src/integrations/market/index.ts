@@ -6,7 +6,9 @@ import type {
   Trade,
   TrendingSort,
 } from "../../schemas/token";
+import { RateLimitError, UpstreamError } from "../_shared/errors";
 import { type AlchemyClient, alchemy } from "../alchemy";
+import { type BirdEyeClient, birdeye } from "../birdeye";
 import { type DexScreenerClient, dexscreener } from "../dexscreener";
 import { type GeckoTerminalClient, geckoterminal } from "../geckoterminal";
 
@@ -46,31 +48,97 @@ export interface MarketClient {
 
 export interface MarketDeps {
   alchemy: Pick<AlchemyClient, "getTokenSupply" | "holders">;
+  birdeye: Pick<
+    BirdEyeClient,
+    "holders" | "ohlcv" | "token" | "trades" | "trending"
+  >;
   dexscreener: DexScreenerClient;
   geckoterminal: GeckoTerminalClient;
 }
 
-const DEFAULT_DEPS: MarketDeps = { alchemy, dexscreener, geckoterminal };
+const DEFAULT_DEPS: MarketDeps = {
+  alchemy,
+  birdeye,
+  dexscreener,
+  geckoterminal,
+};
 
-/** Compose the free, non-CU sources into one market-data client:
- *  - trending / ohlcv / trades → GeckoTerminal (keyless)
- *  - token (price/mc/vol/liq/logo/links) → DexScreener, enriched with `totalSupply` from Alchemy RPC
- *  - holders → Alchemy RPC (top largest accounts → owners) */
+function isProviderFailure(err: unknown): boolean {
+  return err instanceof RateLimitError || err instanceof UpstreamError;
+}
+
+async function cascade<T>(
+  primary: () => Promise<T>,
+  fallback: () => Promise<T>
+): Promise<T> {
+  try {
+    return await primary();
+  } catch (err) {
+    if (isProviderFailure(err)) {
+      return fallback();
+    }
+    throw err;
+  }
+}
+
+async function cascadeArray<T>(
+  primary: () => Promise<T[]>,
+  fallback: () => Promise<T[]>
+): Promise<T[]> {
+  let result: T[];
+  try {
+    result = await primary();
+  } catch (err) {
+    if (isProviderFailure(err)) {
+      return fallback();
+    }
+    throw err;
+  }
+  return result.length > 0 ? result : fallback();
+}
+
+/** Compose market-data sources into one client:
+ *  - BirdEye is primary for token, trending, OHLCV, trades, and holders
+ *  - keyless/free sources cascade when BirdEye is rate-limited, down, or empty */
 export function createMarketClient(
   deps: MarketDeps = DEFAULT_DEPS
 ): MarketClient {
+  async function fallbackToken(input: TokenInput): Promise<TokenDetail | null> {
+    const [base, totalSupply] = await Promise.all([
+      deps.dexscreener.token(input),
+      // Supply is enrichment, not the critical path — a failure degrades to 0, never fails the read.
+      deps.alchemy.getTokenSupply(input).catch(() => 0),
+    ]);
+    return base ? { ...base, totalSupply } : null;
+  }
+
   return {
-    trending: (input) => deps.geckoterminal.trending(input),
-    ohlcv: (input) => deps.geckoterminal.ohlcv(input),
-    trades: (input) => deps.geckoterminal.trades(input),
-    holders: (input) => deps.alchemy.holders(input),
+    trending: (input) =>
+      cascadeArray(
+        () => deps.birdeye.trending(input),
+        () => deps.geckoterminal.trending(input)
+      ),
+    ohlcv: (input) =>
+      cascadeArray(
+        () => deps.birdeye.ohlcv(input),
+        () => deps.geckoterminal.ohlcv(input)
+      ),
+    trades: (input) =>
+      cascadeArray(
+        () => deps.birdeye.trades(input),
+        () => deps.geckoterminal.trades(input)
+      ),
+    holders: (input) =>
+      cascadeArray(
+        () => deps.birdeye.holders(input),
+        () => deps.alchemy.holders(input)
+      ),
     token: async (input) => {
-      const [base, totalSupply] = await Promise.all([
-        deps.dexscreener.token(input),
-        // Supply is enrichment, not the critical path — a failure degrades to 0, never fails the read.
-        deps.alchemy.getTokenSupply(input).catch(() => 0),
-      ]);
-      return base ? { ...base, totalSupply } : null;
+      const result = await cascade(
+        () => deps.birdeye.token(input),
+        () => fallbackToken(input)
+      );
+      return result ?? fallbackToken(input);
     },
   };
 }

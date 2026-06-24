@@ -1,40 +1,39 @@
 # `market` integration (facade)
 
-> The market-data client the routers depend on. Composes the free, **non-CU** sources so the app no
-> longer burns BirdEye's compute-unit quota. Returns the shared view types
+> The market-data client the routers depend on. BirdEye is the primary source because it is the
+> product-specified provider and the account has CU quota again; keyless/free providers remain as
+> cascaded fallbacks for rate limits, upstream failures, or empty reads. Returns the shared view types
 > ([`../../schemas/token.ts`](../../schemas/token.ts)) and throws the same `_shared`
-> `RateLimitError`/`UpstreamError`, so it is a drop-in for the old `birdeye` singleton — routers
-> changed only their import. Format/errors: [`../../AGENTS.md`](../../AGENTS.md).
+> `RateLimitError`/`UpstreamError`. Format/errors: [`../../AGENTS.md`](../../AGENTS.md).
 
 ## Surface → source
 
-| Method | Source |
-|--------|--------|
-| `trending({ sort, limit, offset })` | [`geckoterminal`](../geckoterminal/AGENTS.md) (organic trending pools) |
-| `token({ address })` | [`dexscreener`](../dexscreener/AGENTS.md) (price/mc/vol/liq/logo/links) **+** [`alchemy`](../alchemy/AGENTS.md) `getTokenSupply` for `totalSupply` |
-| `ohlcv({ address, interval, from, to })` | `geckoterminal` (resolve pool → OHLCV) |
-| `trades({ address, limit })` | `geckoterminal` (resolve pool → pool trades) |
-| `holders({ address, limit })` | `alchemy` (largest accounts → owners) |
+| Method | Primary | Fallback |
+|--------|---------|----------|
+| `trending({ sort, limit, offset })` | [`birdeye`](../birdeye/AGENTS.md) | [`geckoterminal`](../geckoterminal/AGENTS.md) organic trending pools |
+| `token({ address })` | `birdeye` token overview | [`dexscreener`](../dexscreener/AGENTS.md) token pairs + [`alchemy`](../alchemy/AGENTS.md) `getTokenSupply` |
+| `ohlcv({ address, interval, from, to })` | `birdeye` OHLCV | `geckoterminal` resolve pool → OHLCV |
+| `trades({ address, limit })` | `birdeye` token swaps | `geckoterminal` resolve pool → pool trades |
+| `holders({ address, limit })` | `birdeye` holders | `alchemy` largest accounts → owners |
 
-`createMarketClient(deps?)` takes injectable `{ dexscreener, geckoterminal, alchemy }` (defaults to the
-real singletons) so tests inject fakes; `market` is the shared instance. **No BirdEye anywhere** — its
-CU quota is exhausted/unused.
+`createMarketClient(deps?)` takes injectable `{ birdeye, dexscreener, geckoterminal, alchemy }`
+(defaults to the real singletons) so tests inject fakes; `market` is the shared instance.
 
 ## Conventions (Rule → Why)
 
 | Rule | Why |
 |------|------|
-| `token` runs DexScreener + Alchemy `getTokenSupply` in parallel; a supply failure degrades `totalSupply` to `0` (never fails the read). | Supply is enrichment; the price/header is the critical path. |
+| BirdEye is tried first for every market surface; `RateLimitError` / `UpstreamError` / empty reads cascade to the free fallback source. | Keeps the product aligned with `TASK.md` while preserving graceful degradation if BirdEye quota/provider health regresses. |
+| The `token` fallback runs DexScreener + Alchemy `getTokenSupply` in parallel; a supply failure degrades `totalSupply` to `0` (never fails the read). | Supply is enrichment; the price/header is the critical path. |
 | Errors are the sub-clients' `_shared` `RateLimitError`/`UpstreamError` — no new vocabulary. | Routers' `instanceof` mapping (`RATE_LIMITED`/`UPSTREAM_ERROR`) is unchanged. |
-| No BirdEye fallback (yet). | Keeps the CU quota truly untouched; a flagged fallback can be added later. |
 
 ## Degradations
 
-`TokenDetail.holders` (count) → `0` and `description` → `null` (no free O(1) source); see
-[`../dexscreener/AGENTS.md`](../dexscreener/AGENTS.md). Holders list capped at top-20; trending
-gainers/new reuse the organic list; long chart ranges may be partial — see
-[`../geckoterminal/AGENTS.md`](../geckoterminal/AGENTS.md).
+When BirdEye cascades, `TokenDetail.holders` (count) may degrade to `0` and `description` to `null`
+(no free O(1) source); see [`../dexscreener/AGENTS.md`](../dexscreener/AGENTS.md). Holders list is
+capped at top-20; if GeckoTerminal is used, trending gainers/new reuse the organic list and long chart
+ranges may be partial — see [`../geckoterminal/AGENTS.md`](../geckoterminal/AGENTS.md).
 
 ## Links
 
-Sources: [`../dexscreener/AGENTS.md`](../dexscreener/AGENTS.md) · [`../geckoterminal/AGENTS.md`](../geckoterminal/AGENTS.md) · [`../alchemy/AGENTS.md`](../alchemy/AGENTS.md) · API: [`../../AGENTS.md`](../../AGENTS.md)
+Sources: [`../birdeye/AGENTS.md`](../birdeye/AGENTS.md) · [`../dexscreener/AGENTS.md`](../dexscreener/AGENTS.md) · [`../geckoterminal/AGENTS.md`](../geckoterminal/AGENTS.md) · [`../alchemy/AGENTS.md`](../alchemy/AGENTS.md) · API: [`../../AGENTS.md`](../../AGENTS.md)

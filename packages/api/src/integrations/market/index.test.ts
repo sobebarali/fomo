@@ -1,6 +1,6 @@
 import { expect, it, vi } from "vitest";
 import type { TokenDetail } from "../../schemas/token";
-import { UpstreamError } from "../_shared/errors";
+import { RateLimitError, UpstreamError } from "../_shared/errors";
 import { createMarketClient } from "./index";
 
 const ADDRESS = "DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263";
@@ -27,6 +27,13 @@ function deps(overrides = {}) {
       getTokenSupply: vi.fn(() => Promise.resolve(1_000_000)),
       holders: vi.fn(() => Promise.resolve([])),
     },
+    birdeye: {
+      trending: vi.fn(() => Promise.resolve([])),
+      token: vi.fn(() => Promise.resolve(baseToken)),
+      ohlcv: vi.fn(() => Promise.resolve([])),
+      trades: vi.fn(() => Promise.resolve([])),
+      holders: vi.fn(() => Promise.resolve([])),
+    },
     dexscreener: { token: vi.fn(() => Promise.resolve(baseToken)) },
     geckoterminal: {
       trending: vi.fn(() => Promise.resolve([])),
@@ -37,18 +44,43 @@ function deps(overrides = {}) {
   };
 }
 
-it("token merges the DexScreener base with the Alchemy supply", async () => {
+it("token reads from BirdEye first", async () => {
   const market = createMarketClient(deps());
 
   const result = await market.token({ address: ADDRESS });
 
-  expect(result?.totalSupply).toBe(1_000_000);
+  expect(result?.totalSupply).toBe(0);
   expect(result?.priceUsd).toBe(0.000_004);
 });
 
-it("token degrades totalSupply to 0 when the supply lookup fails", async () => {
+it("token falls back to DexScreener plus Alchemy supply when BirdEye fails", async () => {
+  const d = deps({
+    birdeye: {
+      trending: vi.fn(() => Promise.resolve([])),
+      token: vi.fn(() => Promise.reject(new RateLimitError())),
+      ohlcv: vi.fn(() => Promise.resolve([])),
+      trades: vi.fn(() => Promise.resolve([])),
+      holders: vi.fn(() => Promise.resolve([])),
+    },
+  });
+  const market = createMarketClient(d);
+
+  const result = await market.token({ address: ADDRESS });
+
+  expect(result?.totalSupply).toBe(1_000_000);
+  expect(d.dexscreener.token).toHaveBeenCalledTimes(1);
+});
+
+it("token fallback degrades totalSupply to 0 when the supply lookup fails", async () => {
   const market = createMarketClient(
     deps({
+      birdeye: {
+        trending: vi.fn(() => Promise.resolve([])),
+        token: vi.fn(() => Promise.resolve(null)),
+        ohlcv: vi.fn(() => Promise.resolve([])),
+        trades: vi.fn(() => Promise.resolve([])),
+        holders: vi.fn(() => Promise.resolve([])),
+      },
       alchemy: {
         getTokenSupply: vi.fn(() => Promise.reject(new UpstreamError("boom"))),
         holders: vi.fn(() => Promise.resolve([])),
@@ -64,39 +96,51 @@ it("token degrades totalSupply to 0 when the supply lookup fails", async () => {
 
 it("token returns null when DexScreener has no pair", async () => {
   const market = createMarketClient(
-    deps({ dexscreener: { token: vi.fn(() => Promise.resolve(null)) } })
+    deps({
+      birdeye: {
+        trending: vi.fn(() => Promise.resolve([])),
+        token: vi.fn(() => Promise.resolve(null)),
+        ohlcv: vi.fn(() => Promise.resolve([])),
+        trades: vi.fn(() => Promise.resolve([])),
+        holders: vi.fn(() => Promise.resolve([])),
+      },
+      dexscreener: { token: vi.fn(() => Promise.resolve(null)) },
+    })
   );
 
   expect(await market.token({ address: ADDRESS })).toBeNull();
 });
 
-it("delegates trending/ohlcv/trades to GeckoTerminal and holders to Alchemy", async () => {
+it("delegates trending/token/ohlcv/trades/holders to BirdEye first", async () => {
   const d = deps();
   const market = createMarketClient(d);
 
   await market.trending({ sort: "trending", limit: 10, offset: 0 });
+  await market.token({ address: ADDRESS });
   await market.ohlcv({ address: ADDRESS, interval: "15m", from: 0, to: 1 });
   await market.trades({ address: ADDRESS, limit: 30 });
   await market.holders({ address: ADDRESS, limit: 20 });
 
-  expect(d.geckoterminal.trending).toHaveBeenCalledTimes(1);
-  expect(d.geckoterminal.ohlcv).toHaveBeenCalledTimes(1);
-  expect(d.geckoterminal.trades).toHaveBeenCalledTimes(1);
-  expect(d.alchemy.holders).toHaveBeenCalledTimes(1);
+  expect(d.birdeye.trending).toHaveBeenCalledTimes(1);
+  expect(d.birdeye.token).toHaveBeenCalledTimes(1);
+  expect(d.birdeye.ohlcv).toHaveBeenCalledTimes(1);
+  expect(d.birdeye.trades).toHaveBeenCalledTimes(1);
+  expect(d.birdeye.holders).toHaveBeenCalledTimes(1);
 });
 
-it("propagates an UpstreamError from a delegated source", async () => {
-  const market = createMarketClient(
-    deps({
-      geckoterminal: {
-        trending: vi.fn(() => Promise.reject(new UpstreamError("down"))),
-        ohlcv: vi.fn(() => Promise.resolve([])),
-        trades: vi.fn(() => Promise.resolve([])),
-      },
-    })
-  );
+it("falls back to GeckoTerminal when BirdEye trending fails", async () => {
+  const d = deps({
+    birdeye: {
+      trending: vi.fn(() => Promise.reject(new UpstreamError("down"))),
+      token: vi.fn(() => Promise.resolve(baseToken)),
+      ohlcv: vi.fn(() => Promise.resolve([])),
+      trades: vi.fn(() => Promise.resolve([])),
+      holders: vi.fn(() => Promise.resolve([])),
+    },
+  });
+  const market = createMarketClient(d);
 
-  await expect(
-    market.trending({ sort: "trending", limit: 10, offset: 0 })
-  ).rejects.toBeInstanceOf(UpstreamError);
+  await market.trending({ sort: "trending", limit: 10, offset: 0 });
+
+  expect(d.geckoterminal.trending).toHaveBeenCalledTimes(1);
 });
