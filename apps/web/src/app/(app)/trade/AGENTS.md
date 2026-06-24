@@ -53,8 +53,8 @@
 |---------|--------|----------|
 | Trending list + top/bottom banners | `tokens.trending` | server-seeded in `layout.tsx`; `TrendingSidebar` + `LiveTokenBanner` share the `["trending"]` query (SSE + 120s fallback poll) |
 | Token header / stats | `tokens.get` | server-rendered quick seed only (1.2s cap, then render preview/client state); `token-live.tsx` wrappers seed from it or same-token trending preview, SSE + 60s fallback poll (`["token", address]`) |
-| Chart render + range-tab refetch | `chart.candles` | client island; self-fetches per range with interval-rounded windows, dynamically loads `lightweight-charts`, default `1D` asks for 24h, `LIVE` polls 30s (not on SSE); after 4s with no data it shows a syncing/retry panel instead of an indefinite skeleton |
-| Holders + trades + tab state | `holders.list` / `trades.recent` | client islands; fetch on tab activation with a skeleton. Trades request 20 rows and poll 60s; holders poll 120s (neither is on SSE); trades also show a syncing/retry panel after 4s with no rows |
+| Chart render + range-tab refetch | `chart.candles` | client island; self-fetches per range with interval-rounded windows, dynamically loads `lightweight-charts`, default `1D` asks for 24h, `LIVE` polls 30s (not on SSE); while fetching with no candles it shows the chart loader |
+| Holders + trades + tab state | `holders.list` / `trades.recent` | client islands; fetch on tab activation with a skeleton. Trades request 20 rows and poll 60s; holders poll 120s (neither is on SSE) |
 | Position | `portfolio.position` | protected client island; polls 20s after Privy auth (per-user, not on SSE) |
 | Buy/sell quote + build/sign/send | `swap.quote` → `swap.buildTransaction` → Privy Solana wallet | client island; quote first, confirm before signing; buy input accepts human SOL and converts to lamports before calling `swap` |
 

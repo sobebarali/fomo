@@ -17,7 +17,6 @@ import type { Holder, TokenDetail, Trade } from "./types";
 type Tab = "trades" | "holders" | "activity" | "about";
 
 const TRADES_LIMIT = 20;
-const SLOW_PANEL_MS = 4000;
 
 export function MarketTabs({
   address,
@@ -30,7 +29,6 @@ export function MarketTabs({
 }) {
   const [active, setActive] = useState<Tab>("trades");
   const [mounted, setMounted] = useState(false);
-  const [showTradesSyncing, setShowTradesSyncing] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -52,24 +50,6 @@ export function MarketTabs({
     queryKey: ["holders", address],
     refetchInterval: active === "holders" && mounted ? 120_000 : false,
   });
-
-  useEffect(() => {
-    setShowTradesSyncing(false);
-    if (
-      !(
-        active === "trades" &&
-        mounted &&
-        trades.isFetching &&
-        trades.data === undefined
-      )
-    ) {
-      return;
-    }
-    const timeout = setTimeout(() => {
-      setShowTradesSyncing(true);
-    }, SLOW_PANEL_MS);
-    return () => clearTimeout(timeout);
-  }, [active, address, mounted, trades.data, trades.isFetching]);
 
   const tabs: { label: string; value: Tab }[] =
     variant === "mobile"
@@ -108,10 +88,6 @@ export function MarketTabs({
           <TradesTable
             isError={trades.isError}
             isFetching={trades.isFetching}
-            isSyncing={showTradesSyncing}
-            onRetry={() => {
-              trades.refetch().catch(() => undefined);
-            }}
             trades={trades.data?.items}
           />
         ) : null}
@@ -131,29 +107,16 @@ export function MarketTabs({
 function TradesTable({
   isError,
   isFetching,
-  isSyncing,
-  onRetry,
   trades,
 }: {
   isError: boolean;
   isFetching: boolean;
-  isSyncing: boolean;
-  onRetry: () => void;
   trades: Trade[] | undefined;
 }) {
   if (isError) {
     return <EmptyState label="Live trades are unavailable." tone="red" />;
   }
   if (trades === undefined) {
-    if (isSyncing) {
-      return (
-        <EmptyState
-          actionLabel="Retry"
-          label="Syncing live trades."
-          onAction={onRetry}
-        />
-      );
-    }
     return <TableSkeleton />;
   }
   if (trades.length === 0) {
@@ -303,14 +266,10 @@ function Metric({ label, value }: { label: string; value: string }) {
 }
 
 function EmptyState({
-  actionLabel,
   label,
-  onAction,
   tone = "neutral",
 }: {
-  actionLabel?: string;
   label: string;
-  onAction?: () => void;
   tone?: "neutral" | "red";
 }) {
   return (
@@ -322,18 +281,7 @@ function EmptyState({
           : "border-white/10 bg-[#101617] text-[#7d8b86]"
       )}
     >
-      <div className="flex items-center justify-between gap-3">
-        <span>{label}</span>
-        {actionLabel && onAction ? (
-          <button
-            className="border border-white/10 px-3 py-2 font-medium text-[#16e27b] text-xs"
-            onClick={onAction}
-            type="button"
-          >
-            {actionLabel}
-          </button>
-        ) : null}
-      </div>
+      {label}
     </div>
   );
 }
