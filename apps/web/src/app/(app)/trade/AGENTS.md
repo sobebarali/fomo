@@ -35,10 +35,11 @@
 > **Live: poll baseline + SSE accelerator, free sources.** Reads come from **free, non-CU** providers
 > (the [`market`](../../../../../packages/api/src/integrations/market/AGENTS.md) facade: BirdEye first,
 > then GeckoTerminal / DexScreener / Alchemy fallbacks). Client islands are **SSE-first** for live
-> updates with slower polling as a fallback. The poller (`src/server/market-poller.ts`,
-> started from `instrumentation.ts`) refreshes trending + the active token's token/trades and pushes over
+> token/trending updates with slower polling as a fallback. The poller (`src/server/market-poller.ts`,
+> started from `instrumentation.ts`) refreshes trending + active token headers every 30s and pushes over
 > **SSE** (`/api/stream`, hub `src/server/sse-hub.ts`); one client `EventSource` (`MarketStream`, mounted in
-> the trade layout) writes each push into the TanStack cache. **Railway's edge proxy buffers SSE
+> the trade layout) writes each push into the TanStack cache. Chart/trades/holders stay client-initiated
+> so background SSE work does not starve active reads in the shared provider limiter. **Railway's edge proxy buffers SSE
 > intermittently** (a 2KB padding comment + `x-accel-buffering: no` help but aren't fully reliable), so
 > each streamed surface keeps a slow poll as the recovery path. Either way it's rate-safe: the
 > server's required Redis stale-while-revalidate cache dedups upstream to ~1 per TTL per key
@@ -49,8 +50,8 @@
 |---------|--------|----------|
 | Trending list + top/bottom banners | `tokens.trending` | server-seeded in `layout.tsx`; `TrendingSidebar` + `LiveTokenBanner` share the `["trending"]` query (SSE + 120s fallback poll) |
 | Token header / stats | `tokens.get` | server-rendered quick seed only (1.2s cap, then render preview/client state); `token-live.tsx` wrappers seed from it or same-token trending preview, SSE + 60s fallback poll (`["token", address]`) |
-| Chart render + range-tab refetch | `chart.candles` | client island; self-fetches per range with interval-rounded windows, dynamically loads `lightweight-charts`, `LIVE` polls 30s (not on SSE) |
-| Holders + trades + tab state | `holders.list` / `trades.recent` | client islands; fetch on tab activation with a skeleton. Trades use SSE + 60s fallback poll (`["trades", address]`); holders poll 120s (not on SSE) |
+| Chart render + range-tab refetch | `chart.candles` | client island; self-fetches per range with interval-rounded windows, dynamically loads `lightweight-charts`, default `1D` asks for 24h, `LIVE` polls 30s (not on SSE) |
+| Holders + trades + tab state | `holders.list` / `trades.recent` | client islands; fetch on tab activation with a skeleton. Trades request 20 rows and poll 60s; holders poll 120s (neither is on SSE) |
 | Position | `portfolio.position` | protected client island; polls 20s after Privy auth (per-user, not on SSE) |
 | Buy/sell quote + build/sign/send | `swap.quote` → `swap.buildTransaction` → Privy Solana wallet | client island; quote first, confirm before signing; buy input accepts human SOL and converts to lamports before calling `swap` |
 
@@ -75,7 +76,8 @@
   TradingView's OSS package — satisfies the "TradingView charting library" requirement with no gated
   datafeed adapter. Range tabs map to the router's `interval`/`from`: `LIVE`→`1m`/3h (polls 30s),
   `1D`→`15m`/server-default (matches the seed), `1W`→`1H`/7d, `1M`→`4H`/30d, `1Y`→`1D`/365d,
-  `MAX`→`1W`/server-default. The client canvas island has no integration test (interactivity islands
+  `MAX`→`1W`/server-default. The default `1D` window is explicitly 24h so prod cold loads do not ask
+  the router for the heavier 300-candle fallback. The client canvas island has no integration test (interactivity islands
   are client-only); the `chart.candles` contract is covered by `chart.integration.test.ts`.
 - **Anonymous wallet state is explicit.** Swap and position islands show sign-in/connect states and
   do not call protected procedures until Privy reports an authenticated user.

@@ -16,6 +16,8 @@ import type { Holder, TokenDetail, Trade } from "./types";
 
 type Tab = "trades" | "holders" | "activity" | "about";
 
+const TRADES_LIMIT = 20;
+
 export function MarketTabs({
   address,
   token,
@@ -37,7 +39,7 @@ export function MarketTabs({
   // the server's stale-while-revalidate cache dedups upstream calls to ~1/TTL per token.
   const trades = useQuery({
     enabled: active === "trades" && mounted,
-    queryFn: () => client.trades.recent({ address, limit: 30 }),
+    queryFn: () => client.trades.recent({ address, limit: TRADES_LIMIT }),
     queryKey: ["trades", address],
     refetchInterval: active === "trades" && mounted ? 60_000 : false,
   });

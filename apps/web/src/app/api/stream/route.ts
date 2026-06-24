@@ -21,10 +21,7 @@ function frame(channel: string, data: unknown): Uint8Array {
 // Public market channels only (no auth). `address` is optional — without it you still get `trending`.
 export function GET(req: NextRequest) {
   const address = req.nextUrl.searchParams.get("address") ?? undefined;
-  const channels = [
-    "trending",
-    ...(address ? [`token:${address}`, `trades:${address}`] : []),
-  ];
+  const channels = ["trending", ...(address ? [`token:${address}`] : [])];
 
   const stream = new ReadableStream<Uint8Array>({
     start(controller) {
@@ -55,10 +52,6 @@ export function GET(req: NextRequest) {
         api.tokens
           .get({ address })
           .then((data) => safeEnqueue(frame(`token:${address}`, data)))
-          .catch(() => undefined);
-        api.trades
-          .recent({ address, limit: 30 })
-          .then((data) => safeEnqueue(frame(`trades:${address}`, data)))
           .catch(() => undefined);
       }
 

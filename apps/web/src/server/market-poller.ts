@@ -9,10 +9,9 @@ import { hasSubscribers, publish, watchedTokens } from "./sse-hub";
 
 // One server-side poll per tick fans out to every connected client (independent of client count).
 // Reads go through the in-process router → `market` facade → shared SWR cache, so the poller is the
-// single upstream caller; clients just receive pushes. Bounded to the trending set + actively-watched
-// tokens so it never hammers the free providers.
-const POLL_MS = 8000;
-const TRADES_PER_TOKEN = 30;
+// single upstream caller; clients just receive pushes. Keep this deliberately slow: active page reads
+// (chart/trades) must not sit behind background refreshes in the shared provider limiter.
+const POLL_MS = 30_000;
 
 let started = false;
 
@@ -36,15 +35,9 @@ async function tick(api: AppRouterClient): Promise<void> {
 
   await Promise.all(
     watchedTokens().map(async (address) => {
-      const [token, trades] = await Promise.allSettled([
-        api.tokens.get({ address }),
-        api.trades.recent({ address, limit: TRADES_PER_TOKEN }),
-      ]);
-      if (token.status === "fulfilled") {
-        publish(`token:${address}`, token.value);
-      }
-      if (trades.status === "fulfilled") {
-        publish(`trades:${address}`, trades.value);
+      const token = await api.tokens.get({ address }).catch(() => null);
+      if (token) {
+        publish(`token:${address}`, token);
       }
     })
   );
