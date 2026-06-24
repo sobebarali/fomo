@@ -51,7 +51,7 @@
 | Chart render + range-tab refetch | `chart.candles` | client island (`lightweight-charts` area series); self-fetches per range, `LIVE` polls 20s (not on SSE) |
 | Holders + trades + tab state | `holders.list` / `trades.recent` | client islands; fetch on tab activation with a skeleton. Trades poll 10s + SSE (`["trades", address]`); holders poll 60s (not on SSE) |
 | Position | `portfolio.position` | protected client island; polls 20s after Privy auth (per-user, not on SSE) |
-| Buy/sell quote + build/sign/send | `swap.quote` → `swap.buildTransaction` → Privy Solana wallet | client island; quote first, confirm before signing |
+| Buy/sell quote + build/sign/send | `swap.quote` → `swap.buildTransaction` → Privy Solana wallet | client island; quote first, confirm before signing; buy input accepts human SOL and converts to lamports before calling `swap` |
 
 ## Conventions (Rule → Why)
 
@@ -60,7 +60,7 @@
 | Static market reads render in RSC; only wallet, polling, and tab interactivity are client islands. | Secrets stay server-side; smaller bundle. |
 | `tokens.get` `BAD_REQUEST`/`NOT_FOUND` calls `notFound()`; rate-limit/upstream failures render scoped empty/error panels. | Invalid routes are 404s; provider failures never become fake market data. |
 | CET-229 ships the `lightweight-charts` area island (`price-chart.tsx`) with functional `LIVE/1D/1W/1M/1Y/MAX` tabs fed by `chart.candles`; `ChartPanel` (RSC) just mounts `<PriceChart address>`, which self-fetches per range with a skeleton (no server seed). | Real chart on the Penpot design; the canvas + tab interactivity must be a client island, and streaming keeps navigation off the chart fetch. |
-| The swap flow uses base-unit string amounts, default `50` bps slippage, quote before build, confirmation before Privy signing/sending. | Preserves Jupiter amount integrity and user consent; the server never signs. |
+| The swap flow sends base-unit string amounts to `swap`, default `50` bps slippage, quote before build, confirmation before Privy signing/sending. Buy UI accepts human SOL (for example `0.0001`) and converts to lamports client-side; sell UI stays token base units until token decimals are available. | Preserves Jupiter amount integrity and user consent; the server never signs. |
 | Position P/L remains neutral when cost basis is unknown (`null` from `portfolio.position`). | Real-data rule: no fabricated cost basis or P/L. |
 | `RATE_LIMITED` (provider 429) auto-recovers: the global TanStack `retry` (`utils/orpc.ts`) retries it with capped backoff and no toast; SSE-fed surfaces self-heal on the next poll push. `loading.tsx` is the fallback for the layout's content slot, so the chrome stays put while the token content spins. (The old `RateLimitRefresher` `router.refresh()` island was retired once SSE landed.) | Free-tier limits are transient; the UI fills in once they clear instead of dead-ending. |
 

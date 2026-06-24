@@ -15,6 +15,9 @@ import { client } from "@/utils/orpc";
 import type { TokenDetail } from "./types";
 
 const WSOL = "So11111111111111111111111111111111111111112";
+const SOL_DECIMALS = 9;
+const SOL_AMOUNT_PATTERN = /^\d*(?:\.\d{0,9})?$/;
+const BASE_UNIT_PATTERN = /^\d*$/;
 
 type Mode = "buy" | "sell";
 
@@ -25,6 +28,44 @@ function base64ToBytes(value: string): Uint8Array {
     bytes[index] = binary.charCodeAt(index);
   }
   return bytes;
+}
+
+function solToLamports(value: string): string | null {
+  const trimmed = value.trim();
+  if (!(trimmed && SOL_AMOUNT_PATTERN.test(trimmed))) {
+    return null;
+  }
+
+  const [whole = "0", fraction = ""] = trimmed.split(".");
+  const paddedFraction = fraction.padEnd(SOL_DECIMALS, "0");
+  const lamports =
+    BigInt(whole || "0") * 1_000_000_000n + BigInt(paddedFraction || "0");
+  return lamports > 0n ? lamports.toString() : null;
+}
+
+function amountToBaseUnits(value: string, mode: Mode): string | null {
+  if (mode === "buy") {
+    return solToLamports(value);
+  }
+  return BASE_UNIT_PATTERN.test(value) && value ? value : null;
+}
+
+function normalizeAmountInput(value: string, mode: Mode): string {
+  if (mode === "buy") {
+    const normalized = value.replace(/[^\d.]/g, "");
+    const firstDot = normalized.indexOf(".");
+    const withoutExtraDots =
+      firstDot === -1
+        ? normalized
+        : `${normalized.slice(0, firstDot + 1)}${normalized
+            .slice(firstDot + 1)
+            .replaceAll(".", "")}`;
+    const [whole = "", fraction] = withoutExtraDots.split(".");
+    return fraction === undefined
+      ? whole
+      : `${whole}.${fraction.slice(0, SOL_DECIMALS)}`;
+  }
+  return value.replace(/\D/g, "");
 }
 
 export function SwapPanel({ token }: { token: TokenDetail | null }) {
@@ -38,22 +79,27 @@ export function SwapPanel({ token }: { token: TokenDetail | null }) {
   const { signAndSendTransaction } = useSignAndSendTransaction();
 
   const selectedWallet = wallets[0] ?? null;
+  const baseUnitAmount = amountToBaseUnits(amount, mode);
   const params = useMemo(() => {
-    if (!(token && amount)) {
+    if (!(token && baseUnitAmount)) {
       return null;
     }
     return {
-      amount,
+      amount: baseUnitAmount,
       inputMint: mode === "buy" ? WSOL : token.address,
       outputMint: mode === "buy" ? token.address : WSOL,
       slippageBps: 50,
     };
-  }, [amount, mode, token]);
+  }, [baseUnitAmount, mode, token]);
 
   const quote = useMutation({
     mutationFn: () => {
       if (!params) {
-        throw new Error("Enter a base-unit amount.");
+        throw new Error(
+          mode === "buy"
+            ? "Enter a SOL amount."
+            : "Enter a token base-unit amount."
+        );
       }
       return client.swap.quote(params);
     },
@@ -94,6 +140,7 @@ export function SwapPanel({ token }: { token: TokenDetail | null }) {
             key={nextMode}
             onClick={() => {
               setMode(nextMode);
+              setAmount("");
               quote.reset();
               setStatus(null);
             }}
@@ -105,24 +152,24 @@ export function SwapPanel({ token }: { token: TokenDetail | null }) {
       </div>
       <div className="mt-4">
         <label className="text-[#7d8b86] text-xs" htmlFor="swap-amount">
-          Amount in base units
+          {mode === "buy" ? "Amount in SOL" : "Amount in token base units"}
         </label>
         <Input
           className="mt-2 h-11 border-white/10 bg-[#101617] font-mono text-sm"
           disabled={!token}
           id="swap-amount"
-          inputMode="numeric"
+          inputMode={mode === "buy" ? "decimal" : "numeric"}
           onChange={(event) => {
-            setAmount(event.target.value.replace(/\D/g, ""));
+            setAmount(normalizeAmountInput(event.target.value, mode));
             quote.reset();
             setStatus(null);
           }}
-          placeholder={mode === "buy" ? "100000000" : "1000000"}
+          placeholder={mode === "buy" ? "0.0001" : "1000000"}
           value={amount}
         />
         <p className="mt-2 text-[#52605b] text-[11px]">
           {mode === "buy"
-            ? "Buy input is SOL lamports."
+            ? "Converted to lamports for Jupiter."
             : "Sell input is token base units."}
         </p>
       </div>
@@ -133,9 +180,9 @@ export function SwapPanel({ token }: { token: TokenDetail | null }) {
         </p>
       ) : null}
       <SwapAction
-        amount={amount}
         authenticated={authenticated}
         buildPending={buildAndSign.isPending}
+        canQuote={Boolean(baseUnitAmount)}
         disabled={disabled}
         hasQuote={Boolean(quote.data)}
         login={login}
@@ -214,7 +261,7 @@ function SummaryRow({ label, value }: { label: string; value: string }) {
 }
 
 function SwapAction({
-  amount,
+  canQuote,
   authenticated,
   buildPending,
   disabled,
@@ -227,7 +274,7 @@ function SwapAction({
   startBuild,
   startQuote,
 }: {
-  amount: string;
+  canQuote: boolean;
   authenticated: boolean;
   buildPending: boolean;
   disabled: boolean;
@@ -282,7 +329,7 @@ function SwapAction({
   return (
     <Button
       className="mt-4 w-full"
-      disabled={disabled || !amount}
+      disabled={disabled || !canQuote}
       onClick={startQuote}
       variant={variant}
     >
