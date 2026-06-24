@@ -15,11 +15,12 @@
   navigations; the sidebar is a client island that highlights the active row via `usePathname`).
   `[address]/page.tsx` renders only the middle + right content for the current token. So clicking a
   token re-renders just that slot (with `loading.tsx` as its fallback), not the whole app.
-- **No cache warmer.** A `TokenWarmer` island that continuously pre-loaded every trending token was
-  removed: looping ~30 tokens × 4 reads nonstop burned the BirdEye **free-tier compute-unit quota**
-  (UPSTREAM_ERROR storm). Instead, switching to a token cold-loads only `tokens.get` (~1 call, then
-  served from the SWR cache on revisit) and the panels stream. Re-introduce a *bounded* warmer only
-  on a paid BirdEye tier.
+- **No blanket cache warmer.** A `TokenWarmer` island that continuously pre-loaded every trending
+  token was removed: looping ~30 tokens × 4 reads nonstop burned the BirdEye **free-tier compute-unit
+  quota** (UPSTREAM_ERROR storm). Instead, the sidebar warms only user-intent/active tokens:
+  `router.prefetch('/trade/{address}')` plus a bounded TanStack prefetch for `tokens.get`.
+  Trending-row data may render as a same-token preview placeholder while the full `tokens.get`
+  result/SSE update catches up; never show previous-token trades or charts under a new active token.
 - **Mobile:** sticky token header with back/share/watch actions, chart + functional
   `LIVE/1D/1W/1M/1Y/MAX` range tabs (`1D` default), compact stats, `Trades`/`Holders`/`About` tabs,
   position card, swap panel, and sticky `Sell` / `Buy {SYMBOL}` actions.
@@ -78,6 +79,10 @@
   are client-only); the `chart.candles` contract is covered by `chart.integration.test.ts`.
 - **Anonymous wallet state is explicit.** Swap and position islands show sign-in/connect states and
   do not call protected procedures until Privy reports an authenticated user.
+- **Intent prefetch, not list-wide warming.** TanStack prefetch follows row `pointerenter` / `focus` /
+  `pointerdown` and active-route changes, but only for `tokens.get`. This is deliberately bounded:
+  it makes likely navigation fast, warms the shared Redis provider cache for the server page, and
+  avoids queueing heavier chart/holders/trades reads ahead of the route.
 
 ## Links
 

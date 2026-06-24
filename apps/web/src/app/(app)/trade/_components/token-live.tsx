@@ -1,13 +1,18 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { client } from "@/utils/orpc";
 import {
   MobileStats,
   MobileTokenHeader,
   TokenHeaderPanel,
 } from "./server-panels";
-import type { TokenDetail } from "./types";
+import type { TokenDetail, TokenView } from "./types";
+
+interface Trending {
+  items: TokenView[];
+  nextCursor: string | null;
+}
 
 // Live token header: seeded by the server's `tokens.get` for an instant first paint. SSE
 // (`token:<address>` → MarketStream writes ["token", address]) updates it instantly when the stream
@@ -16,11 +21,24 @@ import type { TokenDetail } from "./types";
 function useLiveToken(
   address: string,
   initialToken: TokenDetail | null
-): TokenDetail | null {
-  const query = useQuery<TokenDetail | null>({
+): TokenView | null {
+  const queryClient = useQueryClient();
+  const query = useQuery<TokenView | null>({
     queryKey: ["token", address],
     queryFn: () => client.tokens.get({ address }),
-    initialData: initialToken,
+    initialData: initialToken ?? undefined,
+    placeholderData: () => {
+      const cached = queryClient.getQueryData<TokenView | null>([
+        "token",
+        address,
+      ]);
+      if (cached) {
+        return cached;
+      }
+      return queryClient
+        .getQueryData<Trending>(["trending"])
+        ?.items.find((token) => token.address === address);
+    },
     refetchInterval: 60_000,
   });
   return query.data ?? initialToken;

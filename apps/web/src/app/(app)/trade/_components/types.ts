@@ -6,6 +6,16 @@ export type TokenSummary = Awaited<
 
 export type TokenDetail = Awaited<ReturnType<AppRouterClient["tokens"]["get"]>>;
 
+export type TokenPreview = TokenSummary &
+  Partial<
+    Pick<
+      TokenDetail,
+      "description" | "holders" | "links" | "liquidity" | "totalSupply"
+    >
+  >;
+
+export type TokenView = TokenDetail | TokenPreview;
+
 export type Candle = Awaited<
   ReturnType<AppRouterClient["chart"]["candles"]>
 >["candles"][number];

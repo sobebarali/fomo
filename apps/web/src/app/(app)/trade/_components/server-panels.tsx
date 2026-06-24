@@ -23,7 +23,7 @@ import {
 import { PriceChart } from "./price-chart";
 import { SearchBar } from "./search-bar";
 import { TokenLogo } from "./token-logo";
-import type { TokenDetail } from "./types";
+import type { TokenView } from "./types";
 
 export function TradeTopBar() {
   return (
@@ -53,7 +53,7 @@ export function TradeTopBar() {
   );
 }
 
-export function MobileTokenHeader({ token }: { token: TokenDetail | null }) {
+export function MobileTokenHeader({ token }: { token: TokenView | null }) {
   const isUp = (token?.change24h ?? 0) >= 0;
   return (
     <header className="sticky top-0 z-20 border-white/10 border-b bg-[#0b0f10]/95 px-3 py-2 backdrop-blur lg:hidden">
@@ -110,7 +110,7 @@ export function MobileTokenHeader({ token }: { token: TokenDetail | null }) {
   );
 }
 
-export function TokenHeaderPanel({ token }: { token: TokenDetail | null }) {
+export function TokenHeaderPanel({ token }: { token: TokenView | null }) {
   if (!token) {
     return <ErrorBlock code="UPSTREAM_ERROR" title="Token data unavailable" />;
   }
@@ -118,8 +118,14 @@ export function TokenHeaderPanel({ token }: { token: TokenDetail | null }) {
   const stats = [
     ["Market cap", formatUsd(token.marketCap)],
     ["Volume", formatUsd(token.volume24h)],
-    ["Liquidity", formatUsd(token.liquidity)],
-    ["Holders", formatCompact(token.holders)],
+    [
+      "Liquidity",
+      typeof token.liquidity === "number" ? formatUsd(token.liquidity) : "-",
+    ],
+    [
+      "Holders",
+      typeof token.holders === "number" ? formatCompact(token.holders) : "-",
+    ],
   ] as const;
 
   return (
@@ -176,13 +182,23 @@ export function ChartPanel({ address }: { address: string }) {
   );
 }
 
-export function MobileStats({ token }: { token: TokenDetail | null }) {
+export function MobileStats({ token }: { token: TokenView | null }) {
   const stats = token
     ? [
         ["MC", formatUsd(token.marketCap)],
         ["Vol", formatUsd(token.volume24h)],
-        ["Liq", formatUsd(token.liquidity)],
-        ["Holders", formatCompact(token.holders)],
+        [
+          "Liq",
+          typeof token.liquidity === "number"
+            ? formatUsd(token.liquidity)
+            : "-",
+        ],
+        [
+          "Holders",
+          typeof token.holders === "number"
+            ? formatCompact(token.holders)
+            : "-",
+        ],
       ]
     : [
         ["MC", "-"],
