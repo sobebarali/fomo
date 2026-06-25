@@ -1,109 +1,104 @@
-# fomo
+# ChadWallet
 
-This project was created with [Better-T-Stack](https://github.com/AmanVarshney01/create-better-t-stack), a modern TypeScript stack that combines Next.js, Self, ORPC, and more.
+A [fomo.family](https://fomo.family)-style **Solana memecoin trading app**, built with the
+**ChadWallet** brand. A founder-facing landing page plus a live trading page — trending tokens,
+token info + price chart + holders + live trades, and a buy/sell panel with the user's position.
+Rotating token banners top and bottom; tap a token to open its trading page. Sign in with
+Apple/Google via Privy. Powered by **real on-chain data — no mocks**.
+
+Mobile apps:
+[Android](https://play.google.com/store/apps/details?id=xyz.chadwallet.www) ·
+[iOS](https://apps.apple.com/us/app/chadwallet/id6757367474)
 
 ## Features
 
-- **TypeScript** - For type safety and improved developer experience
-- **Next.js** - Full-stack React framework
-- **TailwindCSS** - Utility-first CSS for rapid UI development
-- **Shared UI package** - shadcn/ui primitives live in `packages/ui`
-- **oRPC** - End-to-end type-safe APIs with OpenAPI integration
-- **Drizzle** - TypeScript-first ORM
-- **PostgreSQL** - Database engine
-- **Turborepo** - Optimized monorepo build system
+- **Landing page** — ChadWallet brand, app store links, rotating token banners.
+- **Trading page** (3-column): trending tokens (left) · token info + TradingView chart + holders +
+  live trades (middle) · buy/sell + position (right).
+- **Auth** — sign in with Apple/Google through **Privy**, with an embedded Solana wallet.
+- **Swaps** — quotes + execution via **Jupiter**; the user signs client-side via Privy (the server
+  never holds private keys).
+- **Real market data** — trending, prices, charts, holders, and trades come from live sources behind
+  a `market` facade.
+
+## Stack
+
+Bun + Turborepo monorepo (`@fomo/*`), generated with Better-T-Stack.
+
+- `apps/web` — **Next.js 16** (App Router, React 19, RSC) — UI + API routes.
+- `packages/api` — **oRPC** routers + context; end-to-end typed, OpenAPI.
+- `packages/db` — **Drizzle ORM** schema + queries against **PostgreSQL**.
+- `packages/ui` — shared **shadcn/ui** primitives + Tailwind tokens.
+- `packages/env` — validated env (t3-env + **Zod 4**).
+- `packages/config` — shared tsconfig/tooling + testing harness.
+
+## Market data sources
+
+The trade UI reads through the `market` facade (`packages/api/src/integrations/market`), which
+composes **free, keyless** sources to stay within free-tier limits:
+
+- **DexScreener** — token price / market cap / volume / liquidity / metadata.
+- **GeckoTerminal** — trending list + OHLCV candles + recent trades.
+- **Alchemy** — Solana RPC (balances, holders, token supply).
+- **Jupiter** — swap quotes + execution.
+- **Privy** — server-side token verification.
+
+> BirdEye is kept as a reference client only — its free CU quota is exhausted, so it is out of the
+> read path.
 
 ## Getting Started
-
-First, install the dependencies:
 
 ```bash
 bun install
 ```
 
-## Database Setup
+Set environment variables (validated at boot via `@fomo/env`) in `apps/web/.env` — Postgres
+connection, Privy app ID/secret, and Alchemy RPC. See `packages/env` for the full schema.
 
-This project uses PostgreSQL with Drizzle ORM.
-
-1. Make sure you have a PostgreSQL database set up.
-2. Update your `apps/web/.env` file with your PostgreSQL connection details.
-
-3. Apply the schema to your database:
+Apply the schema, then run dev:
 
 ```bash
 bun run db:push
-```
-
-Then, run the development server:
-
-```bash
 bun run dev
 ```
 
-Open [http://localhost:3001](http://localhost:3001) in your browser to see the fullstack application.
+Open [http://localhost:3001](http://localhost:3001).
 
-## UI Customization
+## Spec-Driven Development
 
-React web apps in this stack share shadcn/ui primitives through `packages/ui`.
+The spec lives next to the code: every module folder carries an `AGENTS.md` (with a `CLAUDE.md`
+symlink) defining its contract — procedures, Zod I/O, error codes, side effects — asserted by
+colocated `*.integration.test.ts`. Start at the root [`AGENTS.md`](AGENTS.md) for the module map,
+code standards, and domain hard rules. Testing doctrine:
+[`packages/config/AGENTS.md`](packages/config/AGENTS.md).
 
-- Change design tokens and global styles in `packages/ui/src/styles/globals.css`
-- Update shared primitives in `packages/ui/src/components/*`
-- Adjust shadcn aliases or style config in `packages/ui/components.json` and `apps/web/components.json`
-
-### Add more shared components
-
-Run this from the project root to add more primitives to the shared UI package:
-
-```bash
-npx shadcn@latest add accordion dialog popover sheet table -c packages/ui
-```
-
-Import shared components like this:
-
-```tsx
-import { Button } from "@fomo/ui/components/button";
-```
-
-### Add app-specific blocks
-
-If you want to add app-specific blocks instead of shared primitives, run the shadcn CLI from `apps/web`.
+Tests run via Vitest with the real DB through **PGlite**; only external service edges
+(DexScreener / GeckoTerminal / Alchemy / Jupiter / Privy) are mocked.
 
 ## Deployment
 
-### Docker Compose
+Deployed on **Railway** (project `chadwallet`): web `Dockerfile` + managed Postgres.
+Docker Compose exists for local (`bun run docker:up`).
 
-- Target: web + server
-- Config: `docker-compose.yml` (app Dockerfiles live in `apps/*/Dockerfile`)
-- Build images: bun run docker:build
-- Start: bun run docker:up
-- Logs: bun run docker:logs
-- Stop: bun run docker:down
+## Available Scripts
 
-Environment variables are read from each app's `.env` file (baked into web builds for public variables) and overridden in `docker-compose.yml` for container networking.
+- `bun run dev` / `dev:web` — start in development mode
+- `bun run build` — build all apps
+- `bun run check-types` — TypeScript across the monorepo
+- `bun x ultracite fix` — lint/format (Ultracite / Biome)
+- `bun run db:push` / `db:generate` / `db:migrate` / `db:studio` — database
+- `bun run docker:build` / `docker:up` / `docker:logs` / `docker:down` — local Docker stack
 
 ## Project Structure
 
 ```
 fomo/
 ├── apps/
-│   └── web/         # Fullstack application (Next.js)
+│   └── web/            # Next.js 16 app — UI (src/app), API routes, components
 ├── packages/
-│   ├── ui/          # Shared shadcn/ui components and styles
-│   ├── api/         # API layer / business logic
-│   └── db/          # Database schema & queries
+│   ├── api/            # oRPC routers + integrations (market facade, swap, auth, …)
+│   ├── db/             # Drizzle schema + Postgres queries
+│   ├── ui/             # shared shadcn/ui primitives + Tailwind tokens
+│   ├── env/            # validated env (t3-env + Zod)
+│   └── config/         # shared tsconfig + testing doctrine + Vitest/PGlite harness
 ```
-
-## Available Scripts
-
-- `bun run dev`: Start all applications in development mode
-- `bun run build`: Build all applications
-- `bun run dev:web`: Start only the web application
-- `bun run check-types`: Check TypeScript types across all apps
-- `bun run db:push`: Push schema changes to database
-- `bun run db:generate`: Generate database client/types
-- `bun run db:migrate`: Run database migrations
-- `bun run db:studio`: Open database studio UI
-- `bun run docker:build`: Build the Docker Compose images
-- `bun run docker:up`: Build and start the Docker Compose stack
-- `bun run docker:logs`: Tail logs from the Docker Compose stack
-- `bun run docker:down`: Stop the Docker Compose stack
